@@ -1,0 +1,208 @@
+{
+  "compressionlevel": -1,
+  "height": 45,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [1, 1, 1, 1, 1, "... (80x45 = 3600 tile IDs, todos 1 para fondo cuaderno)"],
+      "height": 45,
+      "id": 1,
+      "name": "background",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 80,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [0, 0, 2, 2, 2, "... (80x45 tile IDs: 0=vacío, 2=calle, 3=vereda, 4=plaza)"],
+      "height": 45,
+      "id": 2,
+      "name": "ground",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 80,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [0, 0, 0, 5, 5, "... (80x45 tile IDs: 0=vacío/transitable, 5+=obstáculo)"],
+      "height": 45,
+      "id": 3,
+      "name": "obstacles",
+      "opacity": 1,
+      "properties": [
+        {
+          "name": "collides",
+          "type": "bool",
+          "value": true
+        }
+      ],
+      "type": "tilelayer",
+      "visible": true,
+      "width": 80,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [0, 0, 0, 0, 0, "... (80x45 tile IDs: 0=vacío, IDs de decoración para nombres de calles, flechas, etc.)"],
+      "height": 45,
+      "id": 4,
+      "name": "decorations",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 80,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 5,
+      "name": "zones",
+      "objects": [
+        {
+          "height": 48,
+          "id": 1,
+          "name": "entry_point",
+          "type": "PuntoDeEntrada",
+          "visible": true,
+          "width": 48,
+          "x": 192,
+          "y": 1080
+        },
+        {
+          "height": 192,
+          "id": 2,
+          "name": "exit_amunategui",
+          "type": "ZonaSalida",
+          "properties": [
+            {
+              "name": "targetMap",
+              "type": "string",
+              "value": "map_amunategui"
+            }
+          ],
+          "visible": true,
+          "width": 48,
+          "x": 3792,
+          "y": 960
+        },
+        {
+          "height": 48,
+          "id": 3,
+          "name": "spawn_top_left",
+          "type": "SpawnPoint",
+          "visible": true,
+          "width": 48,
+          "x": 96,
+          "y": 96
+        },
+        {
+          "height": 48,
+          "id": 4,
+          "name": "spawn_top_right",
+          "type": "SpawnPoint",
+          "visible": true,
+          "width": 48,
+          "x": 3744,
+          "y": 96
+        },
+        {
+          "height": 48,
+          "id": 5,
+          "name": "spawn_bottom_right",
+          "type": "SpawnPoint",
+          "visible": true,
+          "width": 48,
+          "x": 3744,
+          "y": 2064
+        },
+        {
+          "height": 48,
+          "id": 6,
+          "name": "spawn_bottom_left",
+          "type": "SpawnPoint",
+          "visible": true,
+          "width": 48,
+          "x": 96,
+          "y": 2064
+        },
+        {
+          "height": 48,
+          "id": 7,
+          "name": "powerup_center",
+          "type": "PowerupPoint",
+          "visible": true,
+          "width": 48,
+          "x": 1920,
+          "y": 1080
+        },
+        {
+          "height": 48,
+          "id": 8,
+          "name": "powerup_top",
+          "type": "PowerupPoint",
+          "visible": true,
+          "width": 48,
+          "x": 960,
+          "y": 540
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 6,
+  "nextobjectid": 9,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.10.2",
+  "tileheight": 48,
+  "tilesets": [
+    {
+      "columns": 16,
+      "firstgid": 1,
+      "image": "tileset_cuaderno.png",
+      "imageheight": 768,
+      "imagewidth": 768,
+      "margin": 0,
+      "name": "cuaderno",
+      "spacing": 0,
+      "tilecount": 256,
+      "tileheight": 48,
+      "tilewidth": 48,
+      "tiles": [
+        {
+          "id": 4,
+          "properties": [
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "properties": [
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "tilewidth": 48,
+  "type": "map",
+  "version": "1.10",
+  "width": 80
+}

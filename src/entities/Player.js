@@ -1,0 +1,227 @@
+import Phaser from 'phaser'
+import EventBus from '../EventBus.js'
+import Projectile from './Projectile.js'
+
+/**
+ * Player — The main character controlled by the user.
+ * Extends Phaser.Physics.Arcade.Sprite with WASD movement, HP system,
+ * and weapon management.
+ */
+export default class Player extends Phaser.Physics.Arcade.Sprite {
+  constructor (scene, x, y) {
+    super(scene, x, y, 'player')
+
+    // Add to scene and enable physics
+    scene.add.existing(this)
+    scene.physics.add.existing(this)
+
+    // Scale up sprite for visibility in the large world
+    if (this.setScale) this.setScale(2)
+
+    // Core stats
+    this.hp = 10
+    this.maxHp = 10
+    this.speed = 160
+    this.weapon = 'piedra'
+    this.isAlive = true
+
+    // Track last facing direction for idle animation
+    this._lastDirection = 'down'
+
+    // Set up WASD keys
+    this.keys = scene.input.keyboard.addKeys('W,A,S,D')
+
+    // Create animation fallbacks only if BootScene hasn't registered them yet
+    this._ensureAnimations()
+  }
+
+  /**
+   * Creates single-frame animation fallbacks for each direction,
+   * only if BootScene hasn't already registered proper multi-frame animations.
+   */
+  _ensureAnimations () {
+    const anims = this.scene.anims
+    const directions = ['up', 'down', 'left', 'right']
+    // Fallback idle frames for 5-col layout: up=0, down=5, left=10, right=15
+    const idleFrames = { up: 0, down: 5, left: 10, right: 15 }
+
+    for (const dir of directions) {
+      const walkKey = `player_walk_${dir}`
+      const idleKey = `player_idle_${dir}`
+
+      if (!anims.exists(walkKey)) {
+        anims.create({
+          key: walkKey,
+          frames: [{ key: 'player', frame: idleFrames[dir] }],
+          frameRate: 8,
+          repeat: -1
+        })
+      }
+
+      if (!anims.exists(idleKey)) {
+        anims.create({
+          key: idleKey,
+          frames: [{ key: 'player', frame: idleFrames[dir] }],
+          frameRate: 1,
+          repeat: 0
+        })
+      }
+    }
+  }
+
+  /**
+   * Reads WASD key state, normalizes diagonal movement, and sets velocity.
+   * Call this from the scene's update() loop.
+   * @param {object} keys - WASD key objects from Phaser input
+   */
+  move (keys) {
+    if (!this.isAlive) {
+      this.setVelocity(0, 0)
+      return
+    }
+
+    let vx = 0
+    let vy = 0
+
+    if (keys.A.isDown) vx -= 1
+    if (keys.D.isDown) vx += 1
+    if (keys.W.isDown) vy -= 1
+    if (keys.S.isDown) vy += 1
+
+    // Normalize diagonal movement so speed is consistent
+    if (vx !== 0 && vy !== 0) {
+      const factor = Math.SQRT1_2 // 1 / sqrt(2)
+      vx *= factor
+      vy *= factor
+    }
+
+    this.setVelocity(vx * this.speed, vy * this.speed)
+
+    // Determine animation
+    if (vx !== 0 || vy !== 0) {
+      // Pick direction based on dominant axis
+      if (Math.abs(vy) >= Math.abs(vx)) {
+        this._lastDirection = vy < 0 ? 'up' : 'down'
+      } else {
+        this._lastDirection = vx < 0 ? 'left' : 'right'
+      }
+      this.play(`player_walk_${this._lastDirection}`, true)
+    } else {
+      this.play(`player_idle_${this._lastDirection}`, true)
+    }
+  }
+
+  /**
+   * Reduces HP by the given amount, clamped to [0, maxHp].
+   * Emits 'player:damaged' on EventBus. Emits 'gameover' if HP reaches 0.
+   * @param {number} amount - Damage to apply (positive number)
+   */
+  takeDamage (amount) {
+    if (!this.isAlive || amount <= 0) return
+
+    this.hp = Math.max(0, this.hp - amount)
+    EventBus.emit('player:damaged', { amount, hp: this.hp })
+
+    if (this.hp <= 0) {
+      this.isAlive = false
+      this.setVelocity(0, 0)
+      EventBus.emit('gameover')
+    }
+  }
+
+  /**
+   * Restores HP by the given amount, clamped to [0, maxHp].
+   * Emits 'player:healed' on EventBus.
+   * @param {number} amount - HP to restore (positive number)
+   */
+  heal (amount) {
+    if (!this.isAlive || amount <= 0) return
+
+    this.hp = Math.min(this.maxHp, this.hp + amount)
+    EventBus.emit('player:healed', { amount, hp: this.hp })
+  }
+
+  /**
+   * Temporarily boosts speed by a multiplier for a given duration.
+   * @param {number} multiplier - Speed multiplier (e.g. 1.5)
+   * @param {number} duration - Duration in milliseconds
+   */
+  applySpeedBoost (multiplier, duration) {
+    const baseSpeed = 160
+    this.speed = baseSpeed * multiplier
+
+    this.scene.time.delayedCall(duration, () => {
+      this.speed = baseSpeed
+    })
+  }
+
+  /**
+   * Launches a projectile toward the target position.
+   * Piedra: infinite ammo, damage=1.
+   * Molotov: requires globalCounter.molotovs >= 1, damage=5, decrements counter.
+   * @param {number} targetX - World X coordinate
+   * @param {number} targetY - World Y coordinate
+   * @returns {Projectile|null} The created projectile, or null if unable to fire
+   */
+  shoot (targetX, targetY) {
+    if (!this.isAlive) return null
+
+    if (this.weapon === 'molotov') {
+      if (!this.globalCounter || this.globalCounter.molotovs <= 0) {
+        return null
+      }
+      this.globalCounter.molotovs -= 1
+      EventBus.emit('molotov:changed', { count: this.globalCounter.molotovs })
+    }
+
+    // Play throw animation in the facing direction
+    this._playAttackAnim()
+
+    const projectile = new Projectile(this.scene, this.x, this.y, this.weapon, targetX, targetY)
+
+    // Add to projectileGroup if available, then re-apply velocity
+    // (adding to a group can reset the physics body)
+    if (this.projectileGroup) {
+      this.projectileGroup.add(projectile)
+      if (projectile.launch) projectile.launch()
+    }
+
+    return projectile
+  }
+
+  /**
+   * Play the attack/throw animation for the current facing direction.
+   * Animation plays once then the movement logic resumes walk/idle.
+   */
+  _playAttackAnim () {
+    const attackKey = `player_attack_${this._lastDirection}`
+    if (this.scene?.anims?.exists(attackKey)) {
+      this.play(attackKey)
+    }
+  }
+
+  /**
+   * Fires a projectile in the player's current facing direction.
+   * Used by spacebar — shoots 200px ahead in the direction the player faces.
+   * @returns {Projectile|null}
+   */
+  shootInFacingDirection () {
+    const SHOOT_DISTANCE = 480 // ~5 body lengths
+    const offsets = {
+      up: { x: 0, y: -SHOOT_DISTANCE },
+      down: { x: 0, y: SHOOT_DISTANCE },
+      left: { x: -SHOOT_DISTANCE, y: 0 },
+      right: { x: SHOOT_DISTANCE, y: 0 }
+    }
+    const offset = offsets[this._lastDirection] || offsets.down
+    return this.shoot(this.x + offset.x, this.y + offset.y)
+  }
+
+  /**
+   * Toggles weapon between 'piedra' and 'molotov'.
+   */
+  switchWeapon () {
+    this.weapon = this.weapon === 'piedra' ? 'molotov' : 'piedra'
+    EventBus.emit('weapon:changed', { weapon: this.weapon })
+  }
+}
