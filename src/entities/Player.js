@@ -27,9 +27,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Track last facing direction for idle animation
     this._lastDirection = 'down'
+    this._isAttacking = false
 
-    // Set up WASD keys
+    // Set up WASD + arrow keys
     this.keys = scene.input.keyboard.addKeys('W,A,S,D')
+    this.cursors = scene.input.keyboard.createCursorKeys
+      ? scene.input.keyboard.createCursorKeys()
+      : null
 
     // Create animation fallbacks only if BootScene hasn't registered them yet
     this._ensureAnimations()
@@ -83,10 +87,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     let vx = 0
     let vy = 0
 
-    if (keys.A.isDown) vx -= 1
-    if (keys.D.isDown) vx += 1
-    if (keys.W.isDown) vy -= 1
-    if (keys.S.isDown) vy += 1
+    if (keys.A.isDown || this.cursors?.left?.isDown) vx -= 1
+    if (keys.D.isDown || this.cursors?.right?.isDown) vx += 1
+    if (keys.W.isDown || this.cursors?.up?.isDown) vy -= 1
+    if (keys.S.isDown || this.cursors?.down?.isDown) vy += 1
 
     // Normalize diagonal movement so speed is consistent
     if (vx !== 0 && vy !== 0) {
@@ -96,6 +100,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     this.setVelocity(vx * this.speed, vy * this.speed)
+
+    // Don't override attack animation while it's playing
+    if (this._isAttacking) {
+      // Still update direction tracking
+      if (vx !== 0 || vy !== 0) {
+        if (Math.abs(vy) >= Math.abs(vx)) {
+          this._lastDirection = vy < 0 ? 'up' : 'down'
+        } else {
+          this._lastDirection = vx < 0 ? 'left' : 'right'
+        }
+      }
+      return
+    }
 
     // Determine animation
     if (vx !== 0 || vy !== 0) {
@@ -177,7 +194,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Play throw animation in the facing direction
     this._playAttackAnim()
 
-    const projectile = new Projectile(this.scene, this.x, this.y, this.weapon, targetX, targetY)
+    // Offset projectile spawn to the right hand (diestro)
+    // Relative to facing direction: right hand is offset perpendicular
+    const HAND_OFFSET = 16
+    const handOffsets = {
+      up: { x: HAND_OFFSET, y: 0 },       // mirando arriba → mano derecha está a la derecha
+      down: { x: -HAND_OFFSET, y: 0 },     // mirando abajo → mano derecha está a la izquierda (espejado)
+      left: { x: 0, y: -HAND_OFFSET },     // mirando izquierda → mano derecha está arriba
+      right: { x: 0, y: HAND_OFFSET }      // mirando derecha → mano derecha está abajo
+    }
+    const ho = handOffsets[this._lastDirection] || { x: 0, y: 0 }
+    const spawnX = this.x + ho.x
+    const spawnY = this.y + ho.y
+
+    const projectile = new Projectile(this.scene, spawnX, spawnY, this.weapon, targetX, targetY)
 
     // Add to projectileGroup if available, then re-apply velocity
     // (adding to a group can reset the physics body)
@@ -196,7 +226,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   _playAttackAnim () {
     const attackKey = `player_attack_${this._lastDirection}`
     if (this.scene?.anims?.exists(attackKey)) {
+      this._isAttacking = true
       this.play(attackKey)
+      this.once('animationcomplete', () => {
+        this._isAttacking = false
+      })
     }
   }
 

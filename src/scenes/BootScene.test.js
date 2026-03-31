@@ -236,7 +236,7 @@ describe('BootScene', () => {
 
     it('should set attack animations to play once (repeat: 0)', () => {
       const attackDown = scene._anims.get('player_attack_down')
-      expect(attackDown.frameRate).toBe(10)
+      expect(attackDown.frameRate).toBe(4)
       expect(attackDown.repeat).toBe(0)
     })
 
