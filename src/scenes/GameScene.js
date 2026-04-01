@@ -9,6 +9,7 @@ import FormationSystem from '../systems/FormationSystem.js'
 import SaveSystem from '../systems/SaveSystem.js'
 import FinalEventSystem from '../systems/FinalEventSystem.js'
 import SoundSystem from '../systems/SoundSystem.js'
+import TouchControls from '../systems/TouchControls.js'
 import AliadoEstandar from '../entities/AliadoEstandar.js'
 import AliadoRapido from '../entities/AliadoRapido.js'
 import AliadoPunk from '../entities/AliadoPunk.js'
@@ -121,6 +122,9 @@ export default class GameScene extends Phaser.Scene {
     // --- Sound system (procedural Web Audio) ---
     this.soundSystem = new SoundSystem(this)
 
+    // --- Touch controls (mobile joystick + attack button) ---
+    this.touchControls = new TouchControls(this)
+
     // Q key toggles weapon
     this.input.keyboard.on('keydown-Q', () => {
       if (this.player && this.player.isAlive) {
@@ -229,6 +233,12 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.player && this.player.isAlive) {
       this.player.move(this.player.keys)
+
+      // Touch attack button
+      if (this.touchControls?.isEnabled && this.touchControls.attackPressed) {
+        this.player.shootInFacingDirection()
+        this.touchControls.attackPressed = false
+      }
     }
 
     // Track total elapsed time in seconds

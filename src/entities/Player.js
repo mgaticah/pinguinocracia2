@@ -92,6 +92,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (keys.W.isDown || this.cursors?.up?.isDown) vy -= 1
     if (keys.S.isDown || this.cursors?.down?.isDown) vy += 1
 
+    // Touch joystick input
+    const touch = this.scene?.touchControls
+    if (touch?.isEnabled && (touch.direction.x !== 0 || touch.direction.y !== 0)) {
+      vx = touch.direction.x
+      vy = touch.direction.y
+    }
+
     // Normalize diagonal movement so speed is consistent
     if (vx !== 0 && vy !== 0) {
       const factor = Math.SQRT1_2 // 1 / sqrt(2)
