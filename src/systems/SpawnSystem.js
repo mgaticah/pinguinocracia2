@@ -5,7 +5,7 @@ import CamionLanzaGas from '../entities/CamionLanzaGas.js'
 
 const MIN_SPAWN_DISTANCE = 300
 
-const INTERVAL_SEQUENCE = [60000, 45000, 30000, 20000, 15000, 10000, 5000]
+const INTERVAL_SEQUENCE = [20000, 45000, 30000, 20000, 15000, 10000, 5000]
 
 /**
  * Squad compositions — each is an array of { type, count }.
@@ -52,8 +52,8 @@ export default class SpawnSystem {
    * @param {number} allyCount - number of active allies
    */
   update (delta, totalTime, allyCount = 0) {
-    // No spawns before 60 seconds
-    if (totalTime < 60) return
+    // First spawn at 20 seconds (policía estándar patrol)
+    if (totalTime < 20) return
 
     this._timeSinceLastSpawn += delta
 

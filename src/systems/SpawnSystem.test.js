@@ -91,7 +91,7 @@ describe('SpawnSystem', () => {
     })
 
     it('should have intervalMs equal to first element of sequence', () => {
-      expect(spawn.intervalMs).toBe(60000)
+      expect(spawn.intervalMs).toBe(20000)
     })
 
     it('should store the interval sequence', () => {
@@ -104,8 +104,8 @@ describe('SpawnSystem', () => {
   // -----------------------------------------------------------------------
 
   describe('INTERVAL_SEQUENCE', () => {
-    it('should be [60000, 45000, 30000, 20000, 15000, 10000, 5000]', () => {
-      expect(INTERVAL_SEQUENCE).toEqual([60000, 45000, 30000, 20000, 15000, 10000, 5000])
+    it('should be [20000, 45000, 30000, 20000, 15000, 10000, 5000]', () => {
+      expect(INTERVAL_SEQUENCE).toEqual([20000, 45000, 30000, 20000, 15000, 10000, 5000])
     })
 
     it('minimum interval should be 5000ms', () => {
@@ -118,15 +118,15 @@ describe('SpawnSystem', () => {
   // -----------------------------------------------------------------------
 
   describe('update()', () => {
-    it('should not spawn before 60 seconds', () => {
+    it('should not spawn before 20 seconds', () => {
       const spawnSquadSpy = vi.spyOn(spawn, 'spawnSquad')
-      spawn.update(50000, 50)
+      spawn.update(15000, 15)
       expect(spawnSquadSpy).not.toHaveBeenCalled()
     })
 
-    it('should spawn immediately at exactly 60 seconds (first spawn)', () => {
+    it('should spawn immediately at exactly 20 seconds (first spawn)', () => {
       const spawnSquadSpy = vi.spyOn(spawn, 'spawnSquad')
-      spawn.update(0, 60)
+      spawn.update(0, 20)
       expect(spawnSquadSpy).toHaveBeenCalledTimes(1)
     })
 

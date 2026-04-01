@@ -90,6 +90,21 @@ export default class HUDScene extends Phaser.Scene {
     this.finalTimerText.setVisible(false)
     this._positionFinalTimerText()
 
+    // --- Zoom buttons (bottom-left) ---
+    const btnStyle = { fontFamily: 'monospace', fontSize: '28px', color: SKETCH_COLOR }
+    const bw = this.scale ? this.scale.width : 1920
+    const bh = this.scale ? this.scale.height : 1080
+
+    this.zoomInBtn = this.add.text(PADDING, bh - PADDING - 70, '[ + ]', btnStyle)
+    this.zoomInBtn.setOrigin(0, 1)
+    this.zoomInBtn.setInteractive({ useHandCursor: true })
+    this.zoomInBtn.on('pointerdown', () => EventBus.emit('zoom:request', { direction: 'in' }))
+
+    this.zoomOutBtn = this.add.text(PADDING, bh - PADDING - 30, '[ − ]', btnStyle)
+    this.zoomOutBtn.setOrigin(0, 1)
+    this.zoomOutBtn.setInteractive({ useHandCursor: true })
+    this.zoomOutBtn.on('pointerdown', () => EventBus.emit('zoom:request', { direction: 'out' }))
+
     // --- Subscribe to EventBus ---
     this._bindEvents()
   }

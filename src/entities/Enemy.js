@@ -120,9 +120,24 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.isDead || amount <= 0) return
 
     this.hp = Math.max(0, this.hp - amount)
+    this._flashHit()
 
     if (this.hp <= 0) {
       this.die()
+    }
+  }
+
+  /**
+   * Flash yellow tint when hit.
+   */
+  _flashHit () {
+    if (this.setTint) {
+      this.setTint(0xffff00)
+      if (this.scene?.time) {
+        this.scene.time.delayedCall(150, () => {
+          if (this.active && this.clearTint) this.clearTint()
+        })
+      }
     }
   }
 
@@ -168,6 +183,14 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
    */
   update (delta) {
     if (this.isDead || !this.active) return
+
+    // Occlusion: hide visually but keep basic movement for non-overridden enemies
+    const occluded = this._isOccluded()
+    if (occluded) {
+      if (this.visible !== false && this.setVisible) this.setVisible(false)
+    } else {
+      if (this.visible === false && this.setVisible) this.setVisible(true)
+    }
 
     // Build targets list from scene
     const targets = this._getTargets()
@@ -365,5 +388,20 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       return true
     }
     return false
+  }
+
+  /**
+   * Check if this enemy is far enough from the player to be occluded.
+   * Uses distance to player instead of camera viewport for zoom-safety.
+   * Enemies beyond ~1.5 screens away are occluded.
+   * @returns {boolean}
+   */
+  _isOccluded () {
+    if (!this.scene || !this.scene.player) return false
+    const player = this.scene.player
+    const dx = this.x - player.x
+    const dy = this.y - player.y
+    // ~1.5 screens = 1920 * 1.5 = 2880px
+    return (dx * dx + dy * dy) > 2880 * 2880
   }
 }

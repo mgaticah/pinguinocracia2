@@ -32,6 +32,13 @@ export default class CamionLanzaAgua extends Enemy {
     // Use simplified steering for vehicles instead of full A*
     if (this.isDead || !this.active) return
 
+    // Occlusion: hide visually only
+    if (this._isOccluded()) {
+      if (this.visible !== false && this.setVisible) this.setVisible(false)
+    } else {
+      if (this.visible === false && this.setVisible) this.setVisible(true)
+    }
+
     const targets = this._getTargets()
     this.target = this.findNearestTarget(targets)
 

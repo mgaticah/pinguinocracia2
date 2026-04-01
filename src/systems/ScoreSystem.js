@@ -4,10 +4,10 @@ import EventBus from '../EventBus.js'
  * Points awarded per enemy type when killed.
  */
 export const POINTS_TABLE = {
-  policiaEstandar: 10,
-  policiaMontado: 20,
-  camionAgua: 50,
-  camionGas: 40
+  estandar: 10,
+  montado: 20,
+  agua: 50,
+  gas: 40
 }
 
 /** Bonus points per surviving ally */

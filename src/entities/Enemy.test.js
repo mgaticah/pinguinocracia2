@@ -327,7 +327,7 @@ describe('PoliciaEstandar', () => {
     const p = new PoliciaEstandar(scene, 100, 200)
     expect(p.hp).toBe(10)
     expect(p.maxHp).toBe(10)
-    expect(p.speed).toBe(120)
+    expect(p.speed).toBe(120 * 0.7) // PATROL_SPEED = BASE_SPEED * 0.7
     expect(p.damage).toBe(1)
     expect(p.attackCooldown).toBe(1000)
     expect(p.enemyType).toBe('estandar')

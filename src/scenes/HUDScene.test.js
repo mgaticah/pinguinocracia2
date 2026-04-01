@@ -73,6 +73,8 @@ function createMockText (initialText) {
     setAlpha: vi.fn(function (a) { this._alpha = a; return this }),
     setVisible: vi.fn(function (v) { this._visible = v; return this }),
     setDepth: vi.fn(function () { return this }),
+    setInteractive: vi.fn(function () { return this }),
+    on: vi.fn(function () { return this }),
     destroy: vi.fn()
   }
 }

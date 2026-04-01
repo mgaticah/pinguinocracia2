@@ -198,6 +198,7 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     if (this.isDead || amount <= 0) return
 
     this.hp = Math.max(0, this.hp - amount)
+    this._flashHit()
 
     if (this.hp <= 0) {
       this.die()
@@ -225,6 +226,20 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
       })
     } else {
       this.destroy()
+    }
+  }
+
+  /**
+   * Flash yellow tint when hit.
+   */
+  _flashHit () {
+    if (this.setTint) {
+      this.setTint(0xffff00)
+      if (this.scene?.time) {
+        this.scene.time.delayedCall(150, () => {
+          if (this.active && this.clearTint) this.clearTint()
+        })
+      }
     }
   }
 

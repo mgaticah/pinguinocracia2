@@ -137,6 +137,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.isAlive || amount <= 0) return
 
     this.hp = Math.max(0, this.hp - amount)
+    this._flashHit()
     EventBus.emit('player:damaged', { amount, hp: this.hp })
 
     if (this.hp <= 0) {
@@ -216,6 +217,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       if (projectile.launch) projectile.launch()
     }
 
+    // Notify enemies that a projectile was fired (for aggro)
+    EventBus.emit('projectile:fired', { weapon: this.weapon, x: this.x, y: this.y })
+
     return projectile
   }
 
@@ -240,7 +244,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * @returns {Projectile|null}
    */
   shootInFacingDirection () {
-    const SHOOT_DISTANCE = 480 // ~5 body lengths
+    const SHOOT_DISTANCE = 240 // 5 cuerpos (5 × 48px)
     const offsets = {
       up: { x: 0, y: -SHOOT_DISTANCE },
       down: { x: 0, y: SHOOT_DISTANCE },
@@ -249,6 +253,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
     const offset = offsets[this._lastDirection] || offsets.down
     return this.shoot(this.x + offset.x, this.y + offset.y)
+  }
+
+  /**
+   * Flash yellow tint when hit, then restore original tint.
+   */
+  _flashHit () {
+    if (this.setTint) {
+      this.setTint(0xffff00)
+      if (this.scene?.time) {
+        this.scene.time.delayedCall(150, () => {
+          if (this.active && this.clearTint) this.clearTint()
+        })
+      }
+    }
   }
 
   /**

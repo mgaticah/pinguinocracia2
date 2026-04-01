@@ -8,6 +8,7 @@ import EffectSystem from '../systems/EffectSystem.js'
 import FormationSystem from '../systems/FormationSystem.js'
 import SaveSystem from '../systems/SaveSystem.js'
 import FinalEventSystem from '../systems/FinalEventSystem.js'
+import SoundSystem from '../systems/SoundSystem.js'
 import AliadoEstandar from '../entities/AliadoEstandar.js'
 import AliadoRapido from '../entities/AliadoRapido.js'
 import AliadoPunk from '../entities/AliadoPunk.js'
@@ -113,6 +114,9 @@ export default class GameScene extends Phaser.Scene {
     // --- Save system ---
     this.saveSystem = new SaveSystem()
 
+    // --- Sound system (procedural Web Audio) ---
+    this.soundSystem = new SoundSystem(this)
+
     // Q key toggles weapon
     this.input.keyboard.on('keydown-Q', () => {
       if (this.player && this.player.isAlive) {
@@ -163,6 +167,28 @@ export default class GameScene extends Phaser.Scene {
       if (this.player && this.player.isAlive) {
         this.player.shootInFacingDirection()
       }
+    })
+
+    // Zoom controls: + / - keys and mouse wheel
+    this._zoomLevel = 1
+    this._minZoom = 0.4
+    this._maxZoom = 2.0
+    this._zoomStep = 0.1
+
+    this.input.keyboard.on('keydown-PLUS', () => this._zoomIn())
+    this.input.keyboard.on('keydown-NUMPAD_ADD', () => this._zoomIn())
+    this.input.keyboard.on('keydown-MINUS', () => this._zoomOut())
+    this.input.keyboard.on('keydown-NUMPAD_SUBTRACT', () => this._zoomOut())
+
+    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
+      if (deltaY < 0) this._zoomIn()
+      else if (deltaY > 0) this._zoomOut()
+    })
+
+    // Listen for zoom requests from HUD buttons
+    EventBus.on('zoom:request', (data) => {
+      if (data.direction === 'in') this._zoomIn()
+      else if (data.direction === 'out') this._zoomOut()
     })
 
     // Overlap: projectiles vs enemies → damage + destroy projectile
@@ -225,6 +251,15 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
+    // Update enemies
+    if (this.enemyGroup) {
+      for (const enemy of this.enemyGroup.getChildren()) {
+        if (enemy.active && !enemy.isDead && enemy.update) {
+          enemy.update(delta)
+        }
+      }
+    }
+
     // Update final event system
     if (this.finalEventSystem) {
       this.finalEventSystem.update(delta)
@@ -240,6 +275,7 @@ export default class GameScene extends Phaser.Scene {
     if (enemy.takeDamage) {
       enemy.takeDamage(projectile.damage)
     }
+    if (this.soundSystem) this.soundSystem.playHit()
     projectile.destroy()
   }
 
@@ -571,5 +607,23 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.saveSystem.restoreGameState(this, state)
+  }
+
+  /**
+   * Zoom in the camera.
+   */
+  _zoomIn () {
+    this._zoomLevel = Math.min(this._maxZoom, this._zoomLevel + this._zoomStep)
+    this.cameras.main.setZoom(this._zoomLevel)
+    EventBus.emit('zoom:changed', { zoom: this._zoomLevel })
+  }
+
+  /**
+   * Zoom out the camera.
+   */
+  _zoomOut () {
+    this._zoomLevel = Math.max(this._minZoom, this._zoomLevel - this._zoomStep)
+    this.cameras.main.setZoom(this._zoomLevel)
+    EventBus.emit('zoom:changed', { zoom: this._zoomLevel })
   }
 }

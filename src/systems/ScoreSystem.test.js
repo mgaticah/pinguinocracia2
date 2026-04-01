@@ -40,10 +40,10 @@ describe('ScoreSystem', () => {
 
   describe('POINTS_TABLE', () => {
     it('should have correct points for each enemy type', () => {
-      expect(POINTS_TABLE.policiaEstandar).toBe(10)
-      expect(POINTS_TABLE.policiaMontado).toBe(20)
-      expect(POINTS_TABLE.camionAgua).toBe(50)
-      expect(POINTS_TABLE.camionGas).toBe(40)
+      expect(POINTS_TABLE.estandar).toBe(10)
+      expect(POINTS_TABLE.montado).toBe(20)
+      expect(POINTS_TABLE.agua).toBe(50)
+      expect(POINTS_TABLE.gas).toBe(40)
     })
   })
 
@@ -71,23 +71,23 @@ describe('ScoreSystem', () => {
   // -------------------------------------------------------------------
 
   describe('addKill()', () => {
-    it('should add 10 points for policiaEstandar', () => {
-      scoreSystem.addKill('policiaEstandar')
+    it('should add 10 points for estandar', () => {
+      scoreSystem.addKill('estandar')
       expect(scoreSystem.getTotal()).toBe(10)
     })
 
-    it('should add 20 points for policiaMontado', () => {
-      scoreSystem.addKill('policiaMontado')
+    it('should add 20 points for montado', () => {
+      scoreSystem.addKill('montado')
       expect(scoreSystem.getTotal()).toBe(20)
     })
 
-    it('should add 50 points for camionAgua', () => {
-      scoreSystem.addKill('camionAgua')
+    it('should add 50 points for agua', () => {
+      scoreSystem.addKill('agua')
       expect(scoreSystem.getTotal()).toBe(50)
     })
 
-    it('should add 40 points for camionGas', () => {
-      scoreSystem.addKill('camionGas')
+    it('should add 40 points for gas', () => {
+      scoreSystem.addKill('gas')
       expect(scoreSystem.getTotal()).toBe(40)
     })
 
@@ -97,14 +97,14 @@ describe('ScoreSystem', () => {
     })
 
     it('should accumulate points from multiple kills', () => {
-      scoreSystem.addKill('policiaEstandar')
-      scoreSystem.addKill('policiaMontado')
-      scoreSystem.addKill('camionAgua')
+      scoreSystem.addKill('estandar')
+      scoreSystem.addKill('montado')
+      scoreSystem.addKill('agua')
       expect(scoreSystem.getTotal()).toBe(80)
     })
 
     it('should emit score:changed on EventBus', () => {
-      scoreSystem.addKill('policiaEstandar')
+      scoreSystem.addKill('estandar')
       expect(EventBus.emit).toHaveBeenCalledWith('score:changed', { score: 10, delta: 10 })
     })
   })
@@ -185,7 +185,7 @@ describe('ScoreSystem', () => {
 
   describe('getTotal()', () => {
     it('should return accumulated score from all sources', () => {
-      scoreSystem.addKill('policiaEstandar')   // +10
+      scoreSystem.addKill('estandar')            // +10
       scoreSystem.addAllyBonus(2)               // +10
       scoreSystem.addTimeBonus(5)               // +5
       scoreSystem.addPowerupBonus()             // +5
@@ -204,7 +204,7 @@ describe('ScoreSystem', () => {
       expect(onCall).toBeDefined()
       const callback = onCall[1]
 
-      callback({ type: 'policiaMontado', points: 20 })
+      callback({ type: 'montado', points: 20 })
       expect(scoreSystem.getTotal()).toBe(20)
     })
 
