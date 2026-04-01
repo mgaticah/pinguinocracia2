@@ -33,7 +33,7 @@ export default class PoliciaEstandar extends Enemy {
     this._patrolAxis = Math.random() < 0.5 ? 'horizontal' : 'vertical'
     this._patrolDirection = 1
     this._patrolTimer = 0
-    this._patrolFlipInterval = 3000 + Math.random() * 4000
+    this._patrolFlipInterval = 9000 + Math.random() * 12000
 
     // Start patrol direction toward map center
     if (this.scene?.mapManager?.getMapDimensions) {
@@ -142,7 +142,7 @@ export default class PoliciaEstandar extends Enemy {
     if (this._patrolTimer >= this._patrolFlipInterval) {
       this._patrolTimer = 0
       this._patrolDirection *= -1
-      this._patrolFlipInterval = 3000 + Math.random() * 4000
+      this._patrolFlipInterval = 9000 + Math.random() * 12000
     }
 
     if (this._patrolAxis === 'horizontal') {

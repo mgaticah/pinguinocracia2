@@ -55,6 +55,12 @@ export default class SpawnSystem {
     // First spawn immediately
     if (totalTime < 0) return
 
+    // Cap active enemies to prevent performance issues
+    const activeEnemies = this.scene.enemyGroup
+      ? this.scene.enemyGroup.getChildren().filter(e => e.active).length
+      : 0
+    if (activeEnemies >= 30) return
+
     this._timeSinceLastSpawn += delta
 
     if (!this._firstSpawnDone) {
