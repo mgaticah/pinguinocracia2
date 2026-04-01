@@ -215,7 +215,7 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     const dy = this.y - fromY
     const dist = Math.sqrt(dx * dx + dy * dy)
     if (dist === 0) return
-    const push = 4.8
+    const push = 10
     this.x += (dx / dist) * push
     this.y += (dy / dist) * push
   }

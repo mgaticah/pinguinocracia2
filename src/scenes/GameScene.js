@@ -101,8 +101,17 @@ export default class GameScene extends Phaser.Scene {
       this
     )
 
-    // Collider: enemies don't overlap each other
-    this.physics.add.collider(this.enemyGroup, this.enemyGroup)
+    // Collider: enemies bounce off each other (5px push, no damage)
+    this.physics.add.collider(this.enemyGroup, this.enemyGroup, (a, b) => {
+      const dx = a.x - b.x
+      const dy = a.y - b.y
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1
+      const push = 5
+      a.x += (dx / dist) * push
+      a.y += (dy / dist) * push
+      b.x -= (dx / dist) * push
+      b.y -= (dy / dist) * push
+    })
 
     // --- Effect system ---
     this.effectSystem = new EffectSystem()
@@ -154,13 +163,18 @@ export default class GameScene extends Phaser.Scene {
       this.physics.resume()
     })
 
+    // Clean up when scene is stopped or destroyed
+    this.events.on('shutdown', () => this.shutdown())
+
     // Listen for gameover event from EventBus
-    EventBus.on('gameover', this._onGameOver, this)
+    this._onGameOverBound = this._onGameOver.bind(this)
+    EventBus.on('gameover', this._onGameOverBound)
 
     // Listen for victory event from FinalEventSystem
-    EventBus.on('victory', (data) => {
+    this._onVictoryBound = (data) => {
       this.scene.launch('VictoryScene', { score: data.score })
-    })
+    }
+    EventBus.on('victory', this._onVictoryBound)
 
     // Left-click fires projectile toward pointer world position (desktop only)
     this.input.on('pointerdown', (pointer) => {
@@ -195,10 +209,11 @@ export default class GameScene extends Phaser.Scene {
     })
 
     // Listen for zoom requests from HUD buttons
-    EventBus.on('zoom:request', (data) => {
+    this._onZoomRequestBound = (data) => {
       if (data.direction === 'in') this._zoomIn()
       else if (data.direction === 'out') this._zoomOut()
-    })
+    }
+    EventBus.on('zoom:request', this._onZoomRequestBound)
 
     // Overlap: projectiles vs enemies → damage + destroy projectile
     this.physics.add.overlap(
@@ -618,9 +633,6 @@ export default class GameScene extends Phaser.Scene {
     if (this.powerupGroup) this.powerupGroup.clear(true, true)
     if (this.allyGroup) this.allyGroup.clear(true, true)
 
-    // Clean up sound system EventBus listeners
-    if (this.soundSystem) this.soundSystem.destroy()
-
     this.scene.launch('GameOverScene')
   }
 
@@ -671,5 +683,16 @@ export default class GameScene extends Phaser.Scene {
     this._zoomLevel = Math.max(this._minZoom, this._zoomLevel - this._zoomStep)
     this.cameras.main.setZoom(this._zoomLevel)
     EventBus.emit('zoom:changed', { zoom: this._zoomLevel })
+  }
+
+  /**
+   * Clean up all EventBus listeners and systems when scene is destroyed.
+   */
+  shutdown () {
+    EventBus.off('gameover', this._onGameOverBound)
+    EventBus.off('victory', this._onVictoryBound)
+    EventBus.off('zoom:request', this._onZoomRequestBound)
+    if (this.soundSystem) this.soundSystem.destroy()
+    if (this.scoreSystem) this.scoreSystem.destroy()
   }
 }
