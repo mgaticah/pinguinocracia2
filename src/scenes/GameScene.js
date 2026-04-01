@@ -23,6 +23,7 @@ export default class GameScene extends Phaser.Scene {
   create () {
     // Shared molotov counter
     this.globalCounter = { molotovs: 0 }
+    this._gameOver = false
 
     // Physics groups
     this.projectileGroup = this.physics.add.group({ runChildUpdate: true })
@@ -98,6 +99,9 @@ export default class GameScene extends Phaser.Scene {
       null,
       this
     )
+
+    // Collider: enemies don't overlap each other
+    this.physics.add.collider(this.enemyGroup, this.enemyGroup)
 
     // --- Effect system ---
     this.effectSystem = new EffectSystem()
@@ -221,6 +225,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update (time, delta) {
+    if (this._gameOver) return
+
     if (this.player && this.player.isAlive) {
       this.player.move(this.player.keys)
     }
@@ -273,7 +279,7 @@ export default class GameScene extends Phaser.Scene {
    */
   _onProjectileHitEnemy (projectile, enemy) {
     if (enemy.takeDamage) {
-      enemy.takeDamage(projectile.damage)
+      enemy.takeDamage(projectile.damage, projectile.x, projectile.y)
     }
     if (this.soundSystem) this.soundSystem.playHit()
     projectile.destroy()
@@ -378,7 +384,7 @@ export default class GameScene extends Phaser.Scene {
   _onAllyHitEnemy (ally, enemy) {
     if (enemy.canAttack && enemy.canAttack()) {
       if (ally.takeDamage) {
-        ally.takeDamage(enemy.damage || 1)
+        ally.takeDamage(enemy.damage || 1, enemy.x, enemy.y)
       }
     }
   }
@@ -390,7 +396,7 @@ export default class GameScene extends Phaser.Scene {
    */
   _onPlayerHitEnemy (player, enemy) {
     if (enemy.canAttack && enemy.canAttack()) {
-      player.takeDamage(enemy.damage || 1)
+      player.takeDamage(enemy.damage || 1, enemy.x, enemy.y)
     }
   }
 
@@ -572,9 +578,22 @@ export default class GameScene extends Phaser.Scene {
    * Handle gameover event — launch GameOverScene and stop final event.
    */
   _onGameOver () {
-    if (this.finalEventSystem) {
-      this.finalEventSystem.stop()
-    }
+    // Stop all systems
+    if (this.finalEventSystem) this.finalEventSystem.stop()
+    this._gameOver = true
+
+    // Pause physics so nothing moves
+    if (this.physics?.pause) this.physics.pause()
+
+    // Clear all enemies, projectiles, powerups
+    if (this.enemyGroup) this.enemyGroup.clear(true, true)
+    if (this.projectileGroup) this.projectileGroup.clear(true, true)
+    if (this.powerupGroup) this.powerupGroup.clear(true, true)
+    if (this.allyGroup) this.allyGroup.clear(true, true)
+
+    // Clean up sound system EventBus listeners
+    if (this.soundSystem) this.soundSystem.destroy()
+
     this.scene.launch('GameOverScene')
   }
 

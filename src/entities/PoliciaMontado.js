@@ -35,7 +35,7 @@ export default class PoliciaMontado extends Enemy {
       }
 
       if (this.target.takeDamage) {
-        this.target.takeDamage(this.damage)
+        this.target.takeDamage(this.damage, this.x, this.y)
       }
 
       // Push target in direction of impact

@@ -345,7 +345,7 @@ describe('PoliciaEstandar', () => {
     // Simulate update — target is within melee range (10px away)
     p.update(16)
 
-    expect(target.takeDamage).toHaveBeenCalledWith(1)
+    expect(target.takeDamage).toHaveBeenCalledWith(1, expect.any(Number), expect.any(Number))
   })
 
   it('should not attack when out of range', () => {
@@ -399,7 +399,7 @@ describe('PoliciaMontado', () => {
 
     p.update(16)
 
-    expect(target.takeDamage).toHaveBeenCalledWith(2)
+    expect(target.takeDamage).toHaveBeenCalledWith(2, expect.any(Number), expect.any(Number))
     expect(target.setVelocity).toHaveBeenCalled()
   })
 })

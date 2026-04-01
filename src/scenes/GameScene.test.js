@@ -497,7 +497,7 @@ describe('GameScene', () => {
       const enemy = { takeDamage: vi.fn() }
       const projectile = { damage: 5, destroy: vi.fn() }
       gameScene._onProjectileHitEnemy(projectile, enemy)
-      expect(enemy.takeDamage).toHaveBeenCalledWith(5)
+      expect(enemy.takeDamage).toHaveBeenCalledWith(5, undefined, undefined)
     })
 
     it('should destroy the projectile on hit', () => {
@@ -831,7 +831,7 @@ describe('GameScene', () => {
       gameScene.player.takeDamage = vi.fn()
       const enemy = { canAttack: vi.fn(() => true), damage: 2 }
       gameScene._onPlayerHitEnemy(gameScene.player, enemy)
-      expect(gameScene.player.takeDamage).toHaveBeenCalledWith(2)
+      expect(gameScene.player.takeDamage).toHaveBeenCalledWith(2, undefined, undefined)
     })
 
     it('should not damage player when enemy cannot attack', () => {
@@ -845,7 +845,7 @@ describe('GameScene', () => {
       gameScene.player.takeDamage = vi.fn()
       const enemy = { canAttack: vi.fn(() => true) }
       gameScene._onPlayerHitEnemy(gameScene.player, enemy)
-      expect(gameScene.player.takeDamage).toHaveBeenCalledWith(1)
+      expect(gameScene.player.takeDamage).toHaveBeenCalledWith(1, undefined, undefined)
     })
   })
 

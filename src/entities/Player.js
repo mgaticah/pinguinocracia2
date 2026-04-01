@@ -133,11 +133,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * Emits 'player:damaged' on EventBus. Emits 'gameover' if HP reaches 0.
    * @param {number} amount - Damage to apply (positive number)
    */
-  takeDamage (amount) {
+  takeDamage (amount, fromX, fromY) {
     if (!this.isAlive || amount <= 0) return
 
     this.hp = Math.max(0, this.hp - amount)
     this._flashHit()
+    this._knockback(fromX, fromY)
     EventBus.emit('player:damaged', { amount, hp: this.hp })
 
     if (this.hp <= 0) {
@@ -145,6 +146,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocity(0, 0)
       EventBus.emit('gameover')
     }
+  }
+
+  /**
+   * Push entity away from damage source by 10% of body size.
+   */
+  _knockback (fromX, fromY) {
+    if (fromX == null || fromY == null) return
+    const dx = this.x - fromX
+    const dy = this.y - fromY
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist === 0) return
+    const push = 4.8 // 10% of 48px
+    this.x += (dx / dist) * push
+    this.y += (dy / dist) * push
   }
 
   /**

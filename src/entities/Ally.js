@@ -194,15 +194,30 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
    * Reduce HP by amount, clamped to [0, maxHp].
    * @param {number} amount
    */
-  takeDamage (amount) {
+  takeDamage (amount, fromX, fromY) {
     if (this.isDead || amount <= 0) return
 
     this.hp = Math.max(0, this.hp - amount)
     this._flashHit()
+    this._knockback(fromX, fromY)
 
     if (this.hp <= 0) {
       this.die()
     }
+  }
+
+  /**
+   * Push entity away from damage source by 10% of body size.
+   */
+  _knockback (fromX, fromY) {
+    if (fromX == null || fromY == null) return
+    const dx = this.x - fromX
+    const dy = this.y - fromY
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist === 0) return
+    const push = 4.8
+    this.x += (dx / dist) * push
+    this.y += (dy / dist) * push
   }
 
   /**

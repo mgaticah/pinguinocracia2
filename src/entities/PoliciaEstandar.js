@@ -226,7 +226,7 @@ export default class PoliciaEstandar extends Enemy {
       }
 
       if (this.target.takeDamage) {
-        this.target.takeDamage(this.damage)
+        this.target.takeDamage(this.damage, this.x, this.y)
       }
     } else {
       // Idle while waiting for cooldown
