@@ -118,15 +118,18 @@ describe('SpawnSystem', () => {
   // -----------------------------------------------------------------------
 
   describe('update()', () => {
-    it('should not spawn before 20 seconds', () => {
+    it('should spawn immediately at game start (first spawn)', () => {
       const spawnSquadSpy = vi.spyOn(spawn, 'spawnSquad')
-      spawn.update(15000, 15)
-      expect(spawnSquadSpy).not.toHaveBeenCalled()
+      spawn.update(0, 0)
+      expect(spawnSquadSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('should spawn immediately at exactly 20 seconds (first spawn)', () => {
+    it('should spawn again after intervalMs elapses (second spawn)', () => {
       const spawnSquadSpy = vi.spyOn(spawn, 'spawnSquad')
-      spawn.update(0, 20)
+      spawn.update(0, 0) // first spawn immediate, escalates to level 1 (45000ms)
+      spawnSquadSpy.mockClear()
+      spawn.update(45001, 45)
+      expect(spawnSquadSpy).toHaveBeenCalledTimes(1)
       expect(spawnSquadSpy).toHaveBeenCalledTimes(1)
     })
 

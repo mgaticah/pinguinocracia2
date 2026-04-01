@@ -52,8 +52,8 @@ export default class SpawnSystem {
    * @param {number} allyCount - number of active allies
    */
   update (delta, totalTime, allyCount = 0) {
-    // First spawn at 20 seconds (policía estándar patrol)
-    if (totalTime < 20) return
+    // First spawn immediately
+    if (totalTime < 0) return
 
     this._timeSinceLastSpawn += delta
 

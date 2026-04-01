@@ -304,6 +304,7 @@ export default class GameScene extends Phaser.Scene {
   _onPlayerCollectPowerup (player, powerup) {
     if (powerup.collect) {
       powerup.collect(player)
+      this._flashGreen(player)
     }
   }
 
@@ -324,31 +325,31 @@ export default class GameScene extends Phaser.Scene {
       const healAmount = type === 'manzana' ? 2 : 5
 
       if (ally.hp < ally.maxHp) {
-        // Heal self
         if (ally.heal) ally.heal(healAmount)
+        this._flashGreen(ally)
       } else {
-        // Find character with lowest HP
         const target = this._findLowestHpCharacter(ally)
         if (target && target.heal) {
           target.heal(healAmount)
+          this._flashGreen(target)
         }
       }
 
       EventBus.emit('powerup:collected', { type, collector: ally })
       powerup.destroy()
     } else if (type === 'energetica') {
-      // Apply speed boost to ally via EffectSystem
       if (this.effectSystem) {
         this.effectSystem.applyEffect(ally, 'energetica', 6)
       }
+      this._flashGreen(ally)
       EventBus.emit('powerup:collected', { type, collector: ally })
       powerup.destroy()
     } else if (type === 'botellita') {
-      // Increment global counter
       if (this.globalCounter) {
         this.globalCounter.molotovs += 1
         EventBus.emit('molotov:changed', { count: this.globalCounter.molotovs })
       }
+      this._flashGreen(ally)
       EventBus.emit('powerup:collected', { type, collector: ally })
       powerup.destroy()
     }
@@ -396,6 +397,21 @@ export default class GameScene extends Phaser.Scene {
     if (enemy.canAttack && enemy.canAttack()) {
       if (ally.takeDamage) {
         ally.takeDamage(enemy.damage || 1, enemy.x, enemy.y)
+      }
+    }
+  }
+
+  /**
+   * Flash green tint on a sprite when it benefits from a powerup.
+   * @param {Phaser.GameObjects.Sprite} entity
+   */
+  _flashGreen (entity) {
+    if (entity?.setTint) {
+      entity.setTint(0x66ff66)
+      if (this.time) {
+        this.time.delayedCall(200, () => {
+          if (entity.active && entity.clearTint) entity.clearTint()
+        })
       }
     }
   }
