@@ -119,7 +119,8 @@ export default class GameScene extends Phaser.Scene {
     // --- Score system ---
     this.scoreSystem = new ScoreSystem()
 
-    // Launch HUD overlay scene
+    // Launch HUD overlay scene (stop first in case of restart)
+    this.scene.stop('HUDScene')
     this.scene.launch('HUDScene')
 
     // --- Final Event System (only active in Plaza Italia) ---

@@ -52,6 +52,17 @@ export default class HUDScene extends Phaser.Scene {
   }
 
   create () {
+    // Reset internal state for new game
+    this._hp = 10
+    this._maxHp = 10
+    this._score = 0
+    this._molotovs = 0
+    this._weapon = 'piedra'
+    this._allyCount = 0
+    this._energeticaRemaining = 0
+    this._finalTimerRemaining = 0
+    this._finalTimerActive = false
+
     // --- HP Bar (top-left) ---
     this.hpBar = this.add.graphics()
     this._drawHpBar()
