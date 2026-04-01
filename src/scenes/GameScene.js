@@ -162,8 +162,9 @@ export default class GameScene extends Phaser.Scene {
       this.scene.launch('VictoryScene', { score: data.score })
     })
 
-    // Left-click fires projectile toward pointer world position
+    // Left-click fires projectile toward pointer world position (desktop only)
     this.input.on('pointerdown', (pointer) => {
+      if (this.touchControls?.isEnabled) return // mobile uses touch attack button
       if (pointer.leftButtonDown() && this.player && this.player.isAlive) {
         this.player.shoot(pointer.worldX, pointer.worldY)
       }
