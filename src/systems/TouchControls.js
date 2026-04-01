@@ -24,9 +24,9 @@ export default class TouchControls {
     const w = this.scene.scale.width
     const h = this.scene.scale.height
     return {
-      joystick: { x: 120, y: h - 120 },
-      attack: { x: w - 100, y: h - 120 },
-      weapon: { x: w - 100, y: h - 210 },
+      joystick: { x: 120, y: h * 0.7 },
+      attack: { x: w - 100, y: h * 0.7 },
+      weapon: { x: w - 100, y: h * 0.7 - 90 },
       zoneW: w,
       zoneH: h
     }
