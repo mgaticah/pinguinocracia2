@@ -15,6 +15,9 @@ export default class BootScene extends Phaser.Scene {
       console.error(`[BootScene] Failed to load asset: ${file.key} (${file.url})`)
     })
 
+    // --- Load map backgrounds ---
+    this.load.image('map_barros_arana_bg', 'assets/level1.jpeg')
+
     // --- Load real spritesheets (if the file exists, it replaces the placeholder) ---
     // Characters: 5 cols × 4 rows, 48×48 per frame (PNG must be 240×192px)
     const characters = ['player', 'policiaEstandar', 'policiaMontado', 'aliadoEstandar', 'aliadoRapido', 'aliadoPunk']

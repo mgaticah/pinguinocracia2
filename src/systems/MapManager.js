@@ -325,21 +325,25 @@ export default class MapManager {
     const config = this.maps.get(key)
 
     // --- background layer ---
-    const bg = scene.add.graphics()
-    bg.fillStyle(0xfdf6e3, 1) // cream / notebook paper
-    bg.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT)
-
-    // Horizontal notebook lines
-    bg.lineStyle(1, 0x8cb4d4, 0.35)
-    for (let y = TILE_SIZE; y < MAP_HEIGHT; y += TILE_SIZE) {
-      bg.lineBetween(0, y, MAP_WIDTH, y)
+    const bgKey = `${key}_bg`
+    if (scene.textures && scene.textures.exists(bgKey)) {
+      // Use custom background image
+      const bgImage = scene.add.image(MAP_WIDTH / 2, MAP_HEIGHT / 2, bgKey)
+      bgImage.setDisplaySize(MAP_WIDTH, MAP_HEIGHT)
+      bgImage.setDepth(-10)
+    } else {
+      // Fallback: procedural notebook background
+      const bg = scene.add.graphics()
+      bg.fillStyle(0xfdf6e3, 1)
+      bg.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT)
+      bg.lineStyle(1, 0x8cb4d4, 0.35)
+      for (let y = TILE_SIZE; y < MAP_HEIGHT; y += TILE_SIZE) {
+        bg.lineBetween(0, y, MAP_WIDTH, y)
+      }
+      bg.lineStyle(2, 0xd45d5d, 0.5)
+      bg.lineBetween(96, 0, 96, MAP_HEIGHT)
+      bg.setDepth(-10)
     }
-
-    // Red margin line
-    bg.lineStyle(2, 0xd45d5d, 0.5)
-    bg.lineBetween(96, 0, 96, MAP_HEIGHT)
-
-    bg.setDepth(-10)
 
     // --- ground layer (streets — slightly darker strips) ---
     const ground = scene.add.graphics()
