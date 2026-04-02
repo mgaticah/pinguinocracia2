@@ -345,37 +345,40 @@ export default class MapManager {
       bg.setDepth(-10)
     }
 
-    // --- ground layer (streets — slightly darker strips) ---
-    const ground = scene.add.graphics()
-    ground.fillStyle(0xede4d0, 1)
-    // Horizontal streets
-    for (let y = 0; y < MAP_HEIGHT; y += 480) {
-      ground.fillRect(0, y, MAP_WIDTH, 192)
-    }
-    // Vertical streets
-    for (let x = 0; x < MAP_WIDTH; x += 480) {
-      ground.fillRect(x, 0, 192, MAP_HEIGHT)
-    }
-    ground.setDepth(-9)
+    const hasCustomBg = scene.textures && scene.textures.exists(bgKey)
 
-    // --- obstacles layer (static physics bodies) ---
+    // --- ground layer (only if no custom background) ---
+    if (!hasCustomBg) {
+      const ground = scene.add.graphics()
+      ground.fillStyle(0xede4d0, 1)
+      for (let y = 0; y < MAP_HEIGHT; y += 480) {
+        ground.fillRect(0, y, MAP_WIDTH, 192)
+      }
+      for (let x = 0; x < MAP_WIDTH; x += 480) {
+        ground.fillRect(x, 0, 192, MAP_HEIGHT)
+      }
+      ground.setDepth(-9)
+    }
+
+    // --- obstacles layer (invisible physics bodies when custom bg, visible otherwise) ---
     if (scene.physics && scene.physics.add) {
       this._obstacleGroup = scene.physics.add.staticGroup()
 
       const obstacles = OBSTACLE_LAYOUTS[key] || []
       for (const obs of obstacles) {
-        const rect = scene.add.rectangle(
-          obs.x + obs.width / 2,
-          obs.y + obs.height / 2,
-          obs.width,
-          obs.height,
-          0xb0c4de,
-          0.6
-        )
-        rect.setDepth(-8)
-        this._obstacleGroup.add(rect)
-        rect.body.setSize(obs.width, obs.height)
-        rect.body.setOffset(-obs.width / 2, -obs.height / 2)
+        if (hasCustomBg) {
+          // Invisible collision body only
+          const zone = scene.add.zone(obs.x + obs.width / 2, obs.y + obs.height / 2, obs.width, obs.height)
+          scene.physics.add.existing(zone, true)
+          this._obstacleGroup.add(zone)
+        } else {
+          // Visible rectangle + collision
+          const rect = scene.add.rectangle(obs.x + obs.width / 2, obs.y + obs.height / 2, obs.width, obs.height, 0xb0c4de, 0.6)
+          rect.setDepth(-8)
+          this._obstacleGroup.add(rect)
+          rect.body.setSize(obs.width, obs.height)
+          rect.body.setOffset(-obs.width / 2, -obs.height / 2)
+        }
       }
     }
 
