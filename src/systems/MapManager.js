@@ -207,11 +207,22 @@ export default class MapManager {
     this.currentMap = config
 
     // Build walkable grid
-    this._buildWalkableGrid(key)
+    // Build walkable grid (from collision image if available, else from obstacle layout)
+    const collisionKey = `${key}_collision`
+    if (scene && scene.textures && scene.textures.exists(collisionKey)) {
+      this._buildGridFromCollisionImage(collisionKey, scene)
+    } else {
+      this._buildWalkableGrid(key)
+    }
 
-    // If running inside a real Phaser scene, generate procedural visuals
+    // If running inside a real Phaser scene, generate visuals
     if (scene && scene.add) {
       this._generateProceduralMap(key, scene)
+    }
+
+    // Build physics bodies from walkable grid (for collision image maps)
+    if (scene && scene.physics && scene.textures && scene.textures.exists(collisionKey)) {
+      this._buildObstaclesFromGrid(scene)
     }
 
     return config
@@ -406,6 +417,107 @@ export default class MapManager {
         scene.physics.add.existing(zone, true) // static body
         zone.targetMap = ez.targetMap
         this._exitZoneBodies.push(zone)
+      }
+    }
+  }
+
+  /**
+   * Build walkable grid by reading a collision image.
+   * Red pixels (R > 150, G < 100, B < 100) = obstacle (1), else walkable (0).
+   * Samples the image at TILE_SIZE intervals to build the grid.
+   */
+  _buildGridFromCollisionImage (collisionKey, scene) {
+    const cols = Math.floor(MAP_WIDTH / TILE_SIZE)
+    const rows = Math.floor(MAP_HEIGHT / TILE_SIZE)
+    const grid = Array.from({ length: rows }, () => new Array(cols).fill(0))
+
+    try {
+      const texture = scene.textures.get(collisionKey)
+      const source = texture.getSourceImage()
+      const canvas = document.createElement('canvas')
+      canvas.width = source.width
+      canvas.height = source.height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(source, 0, 0)
+
+      const scaleX = source.width / MAP_WIDTH
+      const scaleY = source.height / MAP_HEIGHT
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          // Sample center of each tile
+          const px = Math.floor((col * TILE_SIZE + TILE_SIZE / 2) * scaleX)
+          const py = Math.floor((row * TILE_SIZE + TILE_SIZE / 2) * scaleY)
+          const pixel = ctx.getImageData(px, py, 1, 1).data
+          const r = pixel[0]
+          const g = pixel[1]
+          const b = pixel[2]
+
+          // Red-ish pixel = obstacle
+          if (r > 150 && g < 100 && b < 100) {
+            grid[row][col] = 1
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[MapManager] Could not read collision image, using empty grid')
+    }
+
+    this._walkableGrid = grid
+  }
+
+  /**
+   * Build invisible physics bodies from the walkable grid.
+   * Groups adjacent obstacle tiles into larger rectangles for efficiency.
+   */
+  _buildObstaclesFromGrid (scene) {
+    if (!scene.physics || !scene.physics.add) return
+
+    this._obstacleGroup = scene.physics.add.staticGroup()
+    const grid = this._walkableGrid
+    if (!grid || grid.length === 0) return
+
+    const rows = grid.length
+    const cols = grid[0].length
+    const visited = Array.from({ length: rows }, () => new Array(cols).fill(false))
+
+    // Greedy merge: combine adjacent obstacle tiles into larger rectangles
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        if (grid[row][col] !== 1 || visited[row][col]) continue
+
+        // Find width of this rectangle
+        let w = 0
+        while (col + w < cols && grid[row][col + w] === 1 && !visited[row][col + w]) {
+          w++
+        }
+
+        // Find height
+        let h = 1
+        let canExtend = true
+        while (row + h < rows && canExtend) {
+          for (let c = col; c < col + w; c++) {
+            if (grid[row + h][c] !== 1 || visited[row + h][c]) {
+              canExtend = false
+              break
+            }
+          }
+          if (canExtend) h++
+        }
+
+        // Mark visited
+        for (let r = row; r < row + h; r++) {
+          for (let c = col; c < col + w; c++) {
+            visited[r][c] = true
+          }
+        }
+
+        // Create physics body
+        const x = col * TILE_SIZE + (w * TILE_SIZE) / 2
+        const y = row * TILE_SIZE + (h * TILE_SIZE) / 2
+        const zone = scene.add.zone(x, y, w * TILE_SIZE, h * TILE_SIZE)
+        scene.physics.add.existing(zone, true)
+        this._obstacleGroup.add(zone)
       }
     }
   }
