@@ -121,7 +121,7 @@ export default class SaveSystem {
         molotovs: scene.globalCounter ? scene.globalCounter.molotovs : 0
       },
       map: {
-        key: scene.currentMapKey || 'map_barros_arana',
+        key: scene.currentMapKey || 'map_level1',
         entryPoint: scene.mapManager
           ? scene.mapManager.getEntryPoint(scene.currentMapKey) || { x: 192, y: 1080 }
           : { x: 192, y: 1080 },

@@ -22,7 +22,7 @@ vi.mock('phaser', () => {
 
 vi.mock('./EventBus.js', () => ({ default: { emit: vi.fn(), on: vi.fn(), off: vi.fn() } }))
 vi.mock('./entities/Projectile.js', () => ({ default: class { constructor (s, x, y, t) { this.scene = s; this.type = t; this.damage = t === 'molotov' ? 5 : 1; this.active = true }; destroy () { this.active = false } } }))
-vi.mock('./systems/MapManager.js', () => ({ default: class { constructor () { this._obstacleGroup = null }; loadMap (key, scene) { if (scene && scene.physics && scene.physics.add) this._obstacleGroup = { type: 'staticGroup' }; return { key } }; getMapDimensions () { return { width: 3840, height: 2160 } }; getEntryPoint () { return { x: 192, y: 1080 } }; getObstacleLayer () { return this._obstacleGroup }; getPowerupPoints () { return [{ x: 960, y: 540 }] }; getExitZones (key) { if (key === 'map_barros_arana') return [{ x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_amunategui' }]; return [] }; getSpawnPoints () { return [{ x: 96, y: 96 }] } } }))
+vi.mock('./systems/MapManager.js', () => ({ default: class { constructor () { this._obstacleGroup = null }; loadMap (key, scene) { if (scene && scene.physics && scene.physics.add) this._obstacleGroup = { type: 'staticGroup' }; return { key } }; getMapDimensions () { return { width: 3840, height: 2160 } }; getEntryPoint () { return { x: 192, y: 1080 } }; getObstacleLayer () { return this._obstacleGroup }; getPowerupPoints () { return [{ x: 960, y: 540 }] }; getExitZones (key) { if (key === 'map_level1') return [{ x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_amunategui' }]; return [] }; getSpawnPoints () { return [{ x: 96, y: 96 }] } } }))
 vi.mock('./systems/PowerupSpawnSystem.js', () => ({ default: class { constructor () {}; update () {} } }))
 vi.mock('./systems/FormationSystem.js', () => ({ default: class { constructor () { this.positions = [] }; getPosition () { return { x: 0, y: 0 } }; update () {} } }))
 vi.mock('./systems/SaveSystem.js', () => ({ default: class { constructor () { this.SLOTS = ['slot1', 'slot2', 'slot3', 'quicksave'] }; save () { return true }; load () { return null }; buildGameState () { return { version: '1.0' } }; restoreGameState () {} } }))
@@ -74,7 +74,7 @@ describe('Complete game flow', () => {
   it('3: initializes all systems', () => { expect(gameScene.spawnSystem).toBeDefined(); expect(gameScene.powerupSpawnSystem).toBeDefined(); expect(gameScene.effectSystem).toBeDefined(); expect(gameScene.formationSystem).toBeDefined(); expect(gameScene.scoreSystem).toBeDefined(); expect(gameScene.saveSystem).toBeDefined(); expect(gameScene.finalEventSystem).toBeDefined() })
   it('3: player at entry point', () => { expect(gameScene.player.x).toBe(192); expect(gameScene.player.y).toBe(1080) })
   it('3: launches HUDScene', () => { expect(m.scene.launch).toHaveBeenCalledWith('HUDScene') })
-  it('3: initial map barros_arana', () => { expect(gameScene.currentMapKey).toBe('map_barros_arana') })
+  it('3: initial map barros_arana', () => { expect(gameScene.currentMapKey).toBe('map_level1') })
   describe('4: map transition', () => {
     let dc
     beforeEach(() => {

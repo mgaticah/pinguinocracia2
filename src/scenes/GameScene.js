@@ -31,7 +31,7 @@ export default class GameScene extends Phaser.Scene {
     this.enemyGroup = this.physics.add.group()
 
     // --- Map setup ---
-    this.currentMapKey = 'map_barros_arana'
+    this.currentMapKey = 'map_level1'
     this.mapManager = new MapManager()
     this.mapManager.loadMap(this.currentMapKey, this)
 

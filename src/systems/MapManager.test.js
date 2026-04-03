@@ -31,7 +31,7 @@ describe('MapManager', () => {
 
   describe('MAP_CONFIGS', () => {
     const expectedKeys = [
-      'map_barros_arana',
+      'map_level1',
       'map_amunategui',
       'map_lastarria',
       'map_plaza_italia'
@@ -60,8 +60,8 @@ describe('MapManager', () => {
       expect(typeof cfg.difficultyModifier).toBe('number')
     })
 
-    it('map_barros_arana should have name "Barros Arana"', () => {
-      expect(MAP_CONFIGS.map_barros_arana.name).toBe('Barros Arana')
+    it('map_level1 should have name "Level 1"', () => {
+      expect(MAP_CONFIGS.map_level1.name).toBe('Level 1')
     })
 
     it('map_amunategui should have name "Amunátegui"', () => {
@@ -81,7 +81,7 @@ describe('MapManager', () => {
     })
 
     it('non-final maps should have at least one exit zone', () => {
-      expect(MAP_CONFIGS.map_barros_arana.exitZones.length).toBeGreaterThanOrEqual(1)
+      expect(MAP_CONFIGS.map_level1.exitZones.length).toBeGreaterThanOrEqual(1)
       expect(MAP_CONFIGS.map_amunategui.exitZones.length).toBeGreaterThanOrEqual(1)
       expect(MAP_CONFIGS.map_lastarria.exitZones.length).toBeGreaterThanOrEqual(1)
     })
@@ -95,7 +95,7 @@ describe('MapManager', () => {
     })
 
     it('difficulty modifier should increase across maps', () => {
-      expect(MAP_CONFIGS.map_barros_arana.difficultyModifier)
+      expect(MAP_CONFIGS.map_level1.difficultyModifier)
         .toBeLessThan(MAP_CONFIGS.map_amunategui.difficultyModifier)
       expect(MAP_CONFIGS.map_amunategui.difficultyModifier)
         .toBeLessThan(MAP_CONFIGS.map_lastarria.difficultyModifier)
@@ -124,9 +124,9 @@ describe('MapManager', () => {
 
   describe('loadMap()', () => {
     it('should set currentMap to the loaded config', () => {
-      const result = manager.loadMap('map_barros_arana', null)
-      expect(manager.currentMap).toBe(MAP_CONFIGS.map_barros_arana)
-      expect(result).toBe(MAP_CONFIGS.map_barros_arana)
+      const result = manager.loadMap('map_level1', null)
+      expect(manager.currentMap).toBe(MAP_CONFIGS.map_level1)
+      expect(result).toBe(MAP_CONFIGS.map_level1)
     })
 
     it('should throw for unknown map key', () => {
@@ -134,21 +134,21 @@ describe('MapManager', () => {
     })
 
     it('should build walkable grid on load', () => {
-      manager.loadMap('map_barros_arana', null)
+      manager.loadMap('map_level1', null)
       const grid = manager.getWalkableGrid()
       expect(grid.length).toBeGreaterThan(0)
       expect(grid[0].length).toBeGreaterThan(0)
     })
 
     it('should mark obstacle cells as 1 in the grid', () => {
-      manager.loadMap('map_barros_arana', null)
+      manager.loadMap('map_level1', null)
       const grid = manager.getWalkableGrid()
       // Obstacle at (480, 240, 288, 192) → tile col 10, row 5
       expect(grid[5][10]).toBe(1)
     })
 
     it('should mark non-obstacle cells as 0', () => {
-      manager.loadMap('map_barros_arana', null)
+      manager.loadMap('map_level1', null)
       const grid = manager.getWalkableGrid()
       // (0,0) is not an obstacle
       expect(grid[0][0]).toBe(0)
@@ -161,17 +161,17 @@ describe('MapManager', () => {
 
   describe('getSpawnPoints()', () => {
     it('should return spawn points for a valid map', () => {
-      const points = manager.getSpawnPoints('map_barros_arana')
-      expect(points.length).toBe(MAP_CONFIGS.map_barros_arana.spawnPoints.length)
+      const points = manager.getSpawnPoints('map_level1')
+      expect(points.length).toBe(MAP_CONFIGS.map_level1.spawnPoints.length)
       expect(points[0]).toHaveProperty('x')
       expect(points[0]).toHaveProperty('y')
     })
 
     it('should return a copy (not the original array)', () => {
-      const points = manager.getSpawnPoints('map_barros_arana')
+      const points = manager.getSpawnPoints('map_level1')
       points.push({ x: 0, y: 0 })
-      expect(manager.getSpawnPoints('map_barros_arana').length)
-        .toBe(MAP_CONFIGS.map_barros_arana.spawnPoints.length)
+      expect(manager.getSpawnPoints('map_level1').length)
+        .toBe(MAP_CONFIGS.map_level1.spawnPoints.length)
     })
 
     it('should return empty array for unknown key', () => {
@@ -192,7 +192,7 @@ describe('MapManager', () => {
 
   describe('getExitZones()', () => {
     it('should return exit zones for a valid map', () => {
-      const zones = manager.getExitZones('map_barros_arana')
+      const zones = manager.getExitZones('map_level1')
       expect(zones.length).toBe(1)
       expect(zones[0]).toHaveProperty('targetMap', 'map_amunategui')
       expect(zones[0]).toHaveProperty('width')
@@ -253,7 +253,7 @@ describe('MapManager', () => {
       const countOnes = (grid) =>
         grid.reduce((sum, row) => sum + row.filter(c => c === 1).length, 0)
 
-      manager.loadMap('map_barros_arana', null)
+      manager.loadMap('map_level1', null)
       const baCount = countOnes(manager.getWalkableGrid())
 
       manager.loadMap('map_plaza_italia', null)

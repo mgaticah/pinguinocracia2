@@ -10,7 +10,8 @@ vi.mock('phaser', () => {
         on: vi.fn(),
         off: vi.fn(),
         spritesheet: vi.fn(),
-        image: vi.fn()
+        image: vi.fn(),
+        json: vi.fn()
       }
       this._textures = new Set()
       this.textures = {

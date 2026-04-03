@@ -107,7 +107,7 @@ vi.mock('../systems/MapManager.js', () => {
       }
 
       getExitZones (key) {
-        if (key === 'map_barros_arana') {
+        if (key === 'map_level1') {
           return [{ x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_amunategui' }]
         }
         return []
@@ -168,7 +168,7 @@ vi.mock('../systems/SaveSystem.js', () => {
           player: { hp: scene.player?.hp || 10, speed: 160, weapon: 'piedra', x: 0, y: 0 },
           allies: [],
           inventory: { molotovs: 0 },
-          map: { key: 'map_barros_arana', entryPoint: { x: 192, y: 1080 }, unlockedExits: [] },
+          map: { key: 'map_level1', entryPoint: { x: 192, y: 1080 }, unlockedExits: [] },
           difficulty: { totalTime: 0, spawnLevel: 0, activeEnemyTypes: [] },
           activeEffects: { energetica: { active: false, remaining: 0 } },
           score: 0
@@ -419,8 +419,8 @@ describe('GameScene', () => {
       expect(gameScene.mapManager).toBeDefined()
     })
 
-    it('should set currentMapKey to map_barros_arana', () => {
-      expect(gameScene.currentMapKey).toBe('map_barros_arana')
+    it('should set currentMapKey to map_level1', () => {
+      expect(gameScene.currentMapKey).toBe('map_level1')
     })
 
     it('should set physics world bounds to map dimensions', () => {
@@ -521,7 +521,7 @@ describe('GameScene', () => {
     })
 
     it('should set up exit zone overlaps in create()', () => {
-      // The mock MapManager returns 1 exit zone for map_barros_arana
+      // The mock MapManager returns 1 exit zone for map_level1
       // _setupExitZones is called in create(), which calls add.zone and physics.add.overlap
       expect(mockScene.add.zone).toHaveBeenCalled()
       expect(mockScene.physics.add.overlap).toHaveBeenCalled()

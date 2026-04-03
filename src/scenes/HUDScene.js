@@ -276,7 +276,7 @@ export default class HUDScene extends Phaser.Scene {
    */
   _showMapName (mapKey) {
     const names = {
-      map_barros_arana: 'Barros Arana',
+      map_level1: 'Level 1',
       map_amunategui: 'Amunátegui',
       map_lastarria: 'Lastarria',
       map_plaza_italia: 'Plaza Italia'
