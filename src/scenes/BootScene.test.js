@@ -199,7 +199,7 @@ describe('BootScene', () => {
 
     it('should set correct frameRate for vehicle move animations', () => {
       const moveDown = scene._anims.get('camionAgua_move_down')
-      expect(moveDown.frameRate).toBe(4)
+      expect(moveDown.frameRate).toBe(6)
       expect(moveDown.repeat).toBe(-1)
     })
 
@@ -241,20 +241,19 @@ describe('BootScene', () => {
       expect(attackDown.repeat).toBe(0)
     })
 
-    it('should use correct frame indices for vehicle move animations', () => {
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [0, 1] })
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [2, 3] })
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [4, 5] })
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [6, 7] })
+    it('should use correct frame indices for vehicle walk animations', () => {
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [0, 1, 2] })
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [4, 5, 6] })
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [8, 9, 10] })
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('camionAgua', { frames: [12, 13, 14] })
     })
 
     it('should register the correct total number of animations', () => {
       // 6 characters × 12 anims (4 walk + 4 idle + 4 attack) = 72
-      // 2 vehicles × 4 move = 8
-      // 4 powerups × 1 = 4
-      // 2 effects = 2
-      // Total = 86
-      expect(scene._anims.size).toBe(86)
+      // 2 vehicles × 16 anims (4 walk + 4 idle + 4 move + 4 attack) = 32
+      // But move aliases share frames with walk, creating 4 extra keys per vehicle
+      // Unique: 72 + 32 + 4 + 2 = 110
+      expect(scene._anims.size).toBe(110)
     })
   })
 

@@ -26,7 +26,7 @@ export default class BootScene extends Phaser.Scene {
       this.load.spritesheet(key, `assets/${key}.png`, { frameWidth: 48, frameHeight: 48 })
     }
 
-    // Vehicles: 2 cols × 4 rows, 96×96 per frame
+    // Vehicles: 4 cols × 4 rows, 96×96 per frame (idle, walk1, walk2, attack)
     const vehicles = ['camionAgua', 'camionGas']
     for (const key of vehicles) {
       this.load.spritesheet(key, `assets/${key}.png`, { frameWidth: 96, frameHeight: 96 })
@@ -74,13 +74,15 @@ export default class BootScene extends Phaser.Scene {
       this._generateSpritesheetTexture(c.key, 48, 48, 5, 4, c.color, c.label)
     }
 
-    // Vehicles — 4×2 spritesheet (96×96 per frame)
+    // Vehicles — 4×4 spritesheet (96×96 per frame)
+    // Cols: 0=idle, 1=walk1, 2=walk2, 3=attack
+    // Rows: 0=up, 1=down, 2=left, 3=right
     const vehicles = [
       { key: 'camionAgua', color: 0x0099cc, label: 'CA' },
       { key: 'camionGas', color: 0x999900, label: 'CG' }
     ]
     for (const v of vehicles) {
-      this._generateSpritesheetTexture(v.key, 96, 96, 2, 4, v.color, v.label)
+      this._generateSpritesheetTexture(v.key, 96, 96, 4, 4, v.color, v.label)
     }
 
     // Powerups — 1×2 spritesheet (32×32 per frame)
@@ -146,15 +148,32 @@ export default class BootScene extends Phaser.Scene {
       this.anims.create({ key: `${key}_attack_right`, frames: this.anims.generateFrameNumbers(key, { frames: [18, 19] }), frameRate: 4, repeat: 0 })
     }
 
-    // Vehicle animations (4 directions × move)
+    // Vehicle animations (4 cols: idle, walk1, walk2, attack × 4 rows: up, down, left, right)
     const vehicleKeys = ['camionAgua', 'camionGas']
     for (const key of vehicleKeys) {
-      // Row 0 = up (frames 0,1), Row 1 = down (frames 2,3)
-      // Row 2 = left (frames 4,5), Row 3 = right (frames 6,7)
-      this.anims.create({ key: `${key}_move_up`, frames: this.anims.generateFrameNumbers(key, { frames: [0, 1] }), frameRate: 4, repeat: -1 })
-      this.anims.create({ key: `${key}_move_down`, frames: this.anims.generateFrameNumbers(key, { frames: [2, 3] }), frameRate: 4, repeat: -1 })
-      this.anims.create({ key: `${key}_move_left`, frames: this.anims.generateFrameNumbers(key, { frames: [4, 5] }), frameRate: 4, repeat: -1 })
-      this.anims.create({ key: `${key}_move_right`, frames: this.anims.generateFrameNumbers(key, { frames: [6, 7] }), frameRate: 4, repeat: -1 })
+      // 4 cols per row → row offset = row * 4
+      // Walk: frames 0,1,2 per row; Attack: frame 3 per row
+      this.anims.create({ key: `${key}_walk_up`, frames: this.anims.generateFrameNumbers(key, { frames: [0, 1, 2] }), frameRate: 6, repeat: -1 })
+      this.anims.create({ key: `${key}_walk_down`, frames: this.anims.generateFrameNumbers(key, { frames: [4, 5, 6] }), frameRate: 6, repeat: -1 })
+      this.anims.create({ key: `${key}_walk_left`, frames: this.anims.generateFrameNumbers(key, { frames: [8, 9, 10] }), frameRate: 6, repeat: -1 })
+      this.anims.create({ key: `${key}_walk_right`, frames: this.anims.generateFrameNumbers(key, { frames: [12, 13, 14] }), frameRate: 6, repeat: -1 })
+
+      this.anims.create({ key: `${key}_idle_up`, frames: [{ key, frame: 0 }], frameRate: 1 })
+      this.anims.create({ key: `${key}_idle_down`, frames: [{ key, frame: 4 }], frameRate: 1 })
+      this.anims.create({ key: `${key}_idle_left`, frames: [{ key, frame: 8 }], frameRate: 1 })
+      this.anims.create({ key: `${key}_idle_right`, frames: [{ key, frame: 12 }], frameRate: 1 })
+
+      // Move aliases (backward compat)
+      this.anims.create({ key: `${key}_move_up`, frames: this.anims.generateFrameNumbers(key, { frames: [0, 1, 2] }), frameRate: 6, repeat: -1 })
+      this.anims.create({ key: `${key}_move_down`, frames: this.anims.generateFrameNumbers(key, { frames: [4, 5, 6] }), frameRate: 6, repeat: -1 })
+      this.anims.create({ key: `${key}_move_left`, frames: this.anims.generateFrameNumbers(key, { frames: [8, 9, 10] }), frameRate: 6, repeat: -1 })
+      this.anims.create({ key: `${key}_move_right`, frames: this.anims.generateFrameNumbers(key, { frames: [12, 13, 14] }), frameRate: 6, repeat: -1 })
+
+      // Attack animation (frame 3 per row)
+      this.anims.create({ key: `${key}_attack_up`, frames: [{ key, frame: 3 }], frameRate: 4, repeat: 0 })
+      this.anims.create({ key: `${key}_attack_down`, frames: [{ key, frame: 7 }], frameRate: 4, repeat: 0 })
+      this.anims.create({ key: `${key}_attack_left`, frames: [{ key, frame: 11 }], frameRate: 4, repeat: 0 })
+      this.anims.create({ key: `${key}_attack_right`, frames: [{ key, frame: 15 }], frameRate: 4, repeat: 0 })
     }
 
     // Powerup animations (2 frames: base + brillo)
