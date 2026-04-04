@@ -79,12 +79,6 @@ describe('TitleScene', () => {
     expect(scene.logoText.text).toBe('PINGÜINOCRACIA 2')
   })
 
-  it('should create subtitle text', () => {
-    scene.create()
-    expect(scene.subtitleText).toBeDefined()
-    expect(scene.subtitleText.text).toBe('escape por santiago centro')
-  })
-
   it('should add a wobble tween to the logo', () => {
     scene.create()
     expect(scene.tweens.add).toHaveBeenCalledWith(

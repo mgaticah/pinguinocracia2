@@ -62,14 +62,6 @@ export default class TitleScene extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5)
 
-    this.subtitleText = this.add.text(w / 2, logoY + 80, 'escape por santiago centro', {
-      fontFamily: 'Georgia, "Times New Roman", serif',
-      fontSize: '36px',
-      color: '#3366aa',
-      fontStyle: 'italic',
-      align: 'center'
-    }).setOrigin(0.5)
-
     // Gentle wobble/vibration on the logo
     this.tweens.add({
       targets: this.logoText,
