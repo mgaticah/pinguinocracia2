@@ -141,11 +141,11 @@ export default class BootScene extends Phaser.Scene {
       this.anims.create({ key: `${key}_idle_left`, frames: [{ key, frame: 10 }], frameRate: 1 })
       this.anims.create({ key: `${key}_idle_right`, frames: [{ key, frame: 15 }], frameRate: 1 })
 
-      // Attack animations (frames 3,4 per row) — plays once at 4fps (~500ms)
-      this.anims.create({ key: `${key}_attack_up`, frames: this.anims.generateFrameNumbers(key, { frames: [3, 4] }), frameRate: 4, repeat: 0 })
-      this.anims.create({ key: `${key}_attack_down`, frames: this.anims.generateFrameNumbers(key, { frames: [8, 9] }), frameRate: 4, repeat: 0 })
-      this.anims.create({ key: `${key}_attack_left`, frames: this.anims.generateFrameNumbers(key, { frames: [13, 14] }), frameRate: 4, repeat: 0 })
-      this.anims.create({ key: `${key}_attack_right`, frames: this.anims.generateFrameNumbers(key, { frames: [18, 19] }), frameRate: 4, repeat: 0 })
+      // Attack animations (frames 3,4 per row) — wind-up then strike, 6fps for snappy feel
+      this.anims.create({ key: `${key}_attack_up`, frames: this.anims.generateFrameNumbers(key, { frames: [3, 4, 3] }), frameRate: 6, repeat: 0 })
+      this.anims.create({ key: `${key}_attack_down`, frames: this.anims.generateFrameNumbers(key, { frames: [8, 9, 8] }), frameRate: 6, repeat: 0 })
+      this.anims.create({ key: `${key}_attack_left`, frames: this.anims.generateFrameNumbers(key, { frames: [13, 14, 13] }), frameRate: 6, repeat: 0 })
+      this.anims.create({ key: `${key}_attack_right`, frames: this.anims.generateFrameNumbers(key, { frames: [18, 19, 18] }), frameRate: 6, repeat: 0 })
     }
 
     // Vehicle animations (4 cols: idle, walk1, walk2, attack × 4 rows: up, down, left, right)

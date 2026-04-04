@@ -28,6 +28,7 @@ export default class PoliciaEstandar extends Enemy {
     // State machine
     this._state = 'patrol'
     this._baseSpeed = BASE_SPEED
+    this._isAttacking = false
 
     // Patrol config — patrol toward center of map from spawn point
     this._patrolAxis = Math.random() < 0.5 ? 'horizontal' : 'vertical'
@@ -105,7 +106,10 @@ export default class PoliciaEstandar extends Enemy {
       if (this.visible !== false && this.setVisible) this.setVisible(false)
     } else {
       if (this.visible === false && this.setVisible) this.setVisible(true)
-      if (nearest && distToTarget <= MELEE_RANGE) {
+      // Don't change state while attack animation is playing
+      if (this._isAttacking) {
+        this._state = 'attack'
+      } else if (nearest && distToTarget <= MELEE_RANGE) {
         this._state = 'attack'
       } else if (nearest && distToTarget <= DETECTION_RANGE) {
         this._state = 'chase'
@@ -209,6 +213,9 @@ export default class PoliciaEstandar extends Enemy {
 
     if (!this.target) return
 
+    // Don't interrupt an ongoing attack animation
+    if (this._isAttacking) return
+
     // Face the target
     const dx = this.target.x - this.x
     const dy = this.target.y - this.y
@@ -219,14 +226,31 @@ export default class PoliciaEstandar extends Enemy {
     }
 
     if (this.canAttack()) {
-      // Play baton strike animation
+      this._isAttacking = true
+
+      // Play baton strike animation (wind-up → strike → return)
       const attackKey = `policiaEstandar_attack_${this._lastDirection}`
       if (this.scene?.anims?.exists(attackKey)) {
         this.play(attackKey)
-      }
 
-      if (this.target.takeDamage) {
-        this.target.takeDamage(this.damage, this.x, this.y)
+        // Deal damage on the strike frame (frame index 2 = impact)
+        const onFrame = (anim, frame) => {
+          if (frame.index === 2 && this.target?.takeDamage) {
+            this.target.takeDamage(this.damage, this.x, this.y)
+          }
+        }
+        this.on('animationupdate', onFrame)
+
+        this.once('animationcomplete', () => {
+          this._isAttacking = false
+          this.off('animationupdate', onFrame)
+        })
+      } else {
+        // Fallback: no animation, apply damage directly
+        this._isAttacking = false
+        if (this.target.takeDamage) {
+          this.target.takeDamage(this.damage, this.x, this.y)
+        }
       }
     } else {
       // Idle while waiting for cooldown
