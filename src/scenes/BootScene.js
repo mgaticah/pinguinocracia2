@@ -19,6 +19,9 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('map_level1_bg', 'assets/level1.png')
     this.load.json('map_level1_grid', 'assets/collision_level1.json')
 
+    this.load.image('map_level2_bg', 'assets/level2.png')
+    this.load.json('map_level2_grid', 'assets/collision_level2.json')
+
     // --- Load real spritesheets (if the file exists, it replaces the placeholder) ---
     // Characters: 5 cols × 4 rows, 48×48 per frame (PNG must be 240×192px)
     const characters = ['player', 'policiaEstandar', 'policiaMontado', 'aliadoEstandar', 'aliadoRapido', 'aliadoPunk']

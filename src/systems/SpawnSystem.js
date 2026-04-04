@@ -81,11 +81,12 @@ export default class SpawnSystem {
    * @param {{ x: number, y: number }} playerPos
    */
   spawnSquad (mapKey, playerPos) {
-    const point = this.selectSpawnPoint(mapKey, playerPos, MIN_SPAWN_DISTANCE)
-    if (!point) return // no valid spawn point this cycle
-
     const totalTime = this.scene.totalTime || 0
     const composition = this.getSquadComposition(this.difficultyLevel, totalTime)
+
+    const VEHICLE_TYPES = new Set(['agua', 'gas'])
+    const footUnits = composition.filter(e => !VEHICLE_TYPES.has(e.type))
+    const vehicleUnits = composition.filter(e => VEHICLE_TYPES.has(e.type))
 
     const ENEMY_CLASSES = {
       estandar: PoliciaEstandar,
@@ -94,17 +95,40 @@ export default class SpawnSystem {
       gas: CamionLanzaGas
     }
 
-    for (const entry of composition) {
-      const EnemyClass = ENEMY_CLASSES[entry.type]
-      if (!EnemyClass) continue
+    // Spawn foot enemies from foot spawn points (blue zones)
+    if (footUnits.length > 0) {
+      const footPoint = this.selectSpawnPoint(mapKey, playerPos, MIN_SPAWN_DISTANCE)
+      if (footPoint) {
+        for (const entry of footUnits) {
+          const EnemyClass = ENEMY_CLASSES[entry.type]
+          if (!EnemyClass) continue
+          for (let i = 0; i < entry.count; i++) {
+            const offsetX = (Math.random() - 0.5) * 60
+            const offsetY = (Math.random() - 0.5) * 60
+            const enemy = new EnemyClass(this.scene, footPoint.x + offsetX, footPoint.y + offsetY)
+            if (this.scene.enemyGroup) {
+              this.scene.enemyGroup.add(enemy)
+            }
+          }
+        }
+      }
+    }
 
-      for (let i = 0; i < entry.count; i++) {
-        // Slight offset so enemies don't stack exactly
-        const offsetX = (Math.random() - 0.5) * 60
-        const offsetY = (Math.random() - 0.5) * 60
-        const enemy = new EnemyClass(this.scene, point.x + offsetX, point.y + offsetY)
-        if (this.scene.enemyGroup) {
-          this.scene.enemyGroup.add(enemy)
+    // Spawn vehicles from vehicle spawn points (orange zones)
+    if (vehicleUnits.length > 0) {
+      const vehiclePoint = this.selectVehicleSpawnPoint(mapKey, playerPos, MIN_SPAWN_DISTANCE)
+      if (vehiclePoint) {
+        for (const entry of vehicleUnits) {
+          const EnemyClass = ENEMY_CLASSES[entry.type]
+          if (!EnemyClass) continue
+          for (let i = 0; i < entry.count; i++) {
+            const offsetX = (Math.random() - 0.5) * 80
+            const offsetY = (Math.random() - 0.5) * 80
+            const enemy = new EnemyClass(this.scene, vehiclePoint.x + offsetX, vehiclePoint.y + offsetY)
+            if (this.scene.enemyGroup) {
+              this.scene.enemyGroup.add(enemy)
+            }
+          }
         }
       }
     }
@@ -145,6 +169,28 @@ export default class SpawnSystem {
     if (!this.scene.mapManager) return null
 
     const points = this.scene.mapManager.getSpawnPoints(mapKey)
+    const valid = points.filter(p => {
+      const dx = p.x - playerPos.x
+      const dy = p.y - playerPos.y
+      return Math.sqrt(dx * dx + dy * dy) >= minDistance
+    })
+
+    if (valid.length === 0) return null
+
+    return valid[Math.floor(Math.random() * valid.length)]
+  }
+
+  /**
+   * Select a vehicle spawn point at least minDistance from the player.
+   * @param {string} mapKey
+   * @param {{ x: number, y: number }} playerPos
+   * @param {number} minDistance
+   * @returns {{ x: number, y: number } | null}
+   */
+  selectVehicleSpawnPoint (mapKey, playerPos, minDistance) {
+    if (!this.scene.mapManager) return null
+
+    const points = this.scene.mapManager.getVehicleSpawnPoints(mapKey)
     const valid = points.filter(p => {
       const dx = p.x - playerPos.x
       const dy = p.y - playerPos.y

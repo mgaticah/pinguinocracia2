@@ -34,9 +34,35 @@ export const MAP_CONFIGS = {
       { x: 2880, y: 1620 }
     ],
     exitZones: [
-      { x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_amunategui' }
+      { x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_level2' }
     ],
     difficultyModifier: 1.0
+  },
+
+  map_level2: {
+    key: 'map_level2',
+    name: 'Level 2',
+    tilemapKey: 'tilemap_level2',
+    width: 2752,
+    height: 1536,
+    entryPoint: { x: 192, y: 768 },
+    spawnPoints: [
+      { x: 96, y: 96 },
+      { x: 2656, y: 96 },
+      { x: 2656, y: 1440 },
+      { x: 96, y: 1440 }
+    ],
+    powerupPoints: [
+      { x: 688, y: 384 },
+      { x: 1376, y: 768 },
+      { x: 2064, y: 384 },
+      { x: 688, y: 1152 },
+      { x: 2064, y: 1152 }
+    ],
+    exitZones: [
+      { x: 2704, y: 672, width: 48, height: 192, targetMap: 'map_amunategui' }
+    ],
+    difficultyModifier: 1.2
   },
 
   map_amunategui: {
@@ -204,6 +230,9 @@ export default class MapManager {
       throw new Error(`MapManager: unknown map key "${key}"`)
     }
 
+    // Clean up previous map visuals and physics
+    this._cleanupPreviousMap(scene)
+
     this.currentMap = config
 
     // Build walkable grid — prefer JSON collision grid, fallback to hardcoded
@@ -211,6 +240,31 @@ export default class MapManager {
     if (scene && scene.cache?.json?.has(gridKey)) {
       const data = scene.cache.json.get(gridKey)
       this._walkableGrid = data.grid
+
+      // Override config with zone data from the collision image
+      if (data.playerSpawn) {
+        config.entryPoint = { x: data.playerSpawn.x, y: data.playerSpawn.y }
+      }
+      if (data.enemySpawns && data.enemySpawns.length > 0) {
+        config.spawnPoints = data.enemySpawns.map(s => ({ x: s.x, y: s.y }))
+      }
+      if (data.vehicleSpawns && data.vehicleSpawns.length > 0) {
+        config.vehicleSpawnPoints = data.vehicleSpawns.map(s => ({ x: s.x, y: s.y }))
+      }
+      if (data.goalZones && data.goalZones.length > 0) {
+        // Build exit zones from goal tiles — compute bounding rect
+        const minX = Math.min(...data.goalZones.map(g => g.x)) - TILE_SIZE / 2
+        const minY = Math.min(...data.goalZones.map(g => g.y)) - TILE_SIZE / 2
+        const maxX = Math.max(...data.goalZones.map(g => g.x)) + TILE_SIZE / 2
+        const maxY = Math.max(...data.goalZones.map(g => g.y)) + TILE_SIZE / 2
+        config.exitZones = [{
+          x: minX,
+          y: minY,
+          width: maxX - minX,
+          height: maxY - minY,
+          targetMap: config.exitZones?.[0]?.targetMap || null
+        }]
+      }
     } else {
       this._buildWalkableGrid(key)
     }
@@ -238,6 +292,15 @@ export default class MapManager {
   getSpawnPoints (key) {
     const config = this.maps.get(key)
     return config ? [...config.spawnPoints] : []
+  }
+
+  /**
+   * @param {string} key
+   * @returns {{ x: number, y: number }[]}
+   */
+  getVehicleSpawnPoints (key) {
+    const config = this.maps.get(key)
+    return config?.vehicleSpawnPoints ? [...config.vehicleSpawnPoints] : this.getSpawnPoints(key)
   }
 
   /**
@@ -288,12 +351,56 @@ export default class MapManager {
    * @returns {{ width: number, height: number }}
    */
   getMapDimensions () {
+    if (this.currentMap?.width && this.currentMap?.height) {
+      return { width: this.currentMap.width, height: this.currentMap.height }
+    }
     return { width: MAP_WIDTH, height: MAP_HEIGHT }
   }
 
   // -----------------------------------------------------------------------
   // Internal helpers
   // -----------------------------------------------------------------------
+
+  /**
+   * Clean up all visual and physics elements from the previous map.
+   */
+  _cleanupPreviousMap (scene) {
+    if (!scene) return
+
+    // Destroy map visual container (bg, ground, labels — everything)
+    if (this._mapContainer) {
+      this._mapContainer.destroy(true)
+      this._mapContainer = null
+    }
+
+    // Also destroy any leftover background images by key
+    if (scene.children) {
+      const toRemove = []
+      scene.children.each(child => {
+        // Remove old background images and graphics at depth <= -7
+        if (child && child.depth !== undefined && child.depth <= -7) {
+          toRemove.push(child)
+        }
+      })
+      for (const obj of toRemove) {
+        obj.destroy()
+      }
+    }
+
+    // Destroy obstacle physics group
+    if (this._obstacleGroup) {
+      this._obstacleGroup.clear(true, true)
+      this._obstacleGroup = null
+    }
+
+    // Destroy exit zone bodies
+    if (this._exitZoneBodies) {
+      for (const z of this._exitZoneBodies) {
+        if (z && z.destroy) z.destroy()
+      }
+      this._exitZoneBodies = []
+    }
+  }
 
   /**
    * Build a tile-based walkable grid from the obstacle layout.
@@ -337,46 +444,46 @@ export default class MapManager {
    */
   _generateProceduralMap (key, scene) {
     const config = this.maps.get(key)
+    const { width: mapW, height: mapH } = this.getMapDimensions()
+
+    // Create a container for all map visuals — easy to destroy on transition
+    this._mapContainer = scene.add.container(0, 0)
+    this._mapContainer.setDepth(-10)
 
     // --- background layer ---
     const bgKey = `${key}_bg`
     if (scene.textures && scene.textures.exists(bgKey)) {
-      // Use custom background image
-      const bgImage = scene.add.image(MAP_WIDTH / 2, MAP_HEIGHT / 2, bgKey)
-      bgImage.setDisplaySize(MAP_WIDTH, MAP_HEIGHT)
-      bgImage.setDepth(-10)
+      const bgImage = scene.add.image(mapW / 2, mapH / 2, bgKey)
+      bgImage.setDisplaySize(mapW, mapH)
+      this._mapContainer.add(bgImage)
     } else {
-      // Fallback: procedural notebook background
       const bg = scene.add.graphics()
       bg.fillStyle(0xfdf6e3, 1)
-      bg.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT)
+      bg.fillRect(0, 0, mapW, mapH)
       bg.lineStyle(1, 0x8cb4d4, 0.35)
-      for (let y = TILE_SIZE; y < MAP_HEIGHT; y += TILE_SIZE) {
-        bg.lineBetween(0, y, MAP_WIDTH, y)
+      for (let y = TILE_SIZE; y < mapH; y += TILE_SIZE) {
+        bg.lineBetween(0, y, mapW, y)
       }
       bg.lineStyle(2, 0xd45d5d, 0.5)
-      bg.lineBetween(96, 0, 96, MAP_HEIGHT)
-      bg.setDepth(-10)
-    }
+      bg.lineBetween(96, 0, 96, mapH)
+      this._mapContainer.add(bg)
 
-    const hasCustomBg = scene.textures && scene.textures.exists(bgKey)
-
-    // --- ground layer (only if no custom background) ---
-    if (!hasCustomBg) {
+      // Ground layer
       const ground = scene.add.graphics()
       ground.fillStyle(0xede4d0, 1)
-      for (let y = 0; y < MAP_HEIGHT; y += 480) {
-        ground.fillRect(0, y, MAP_WIDTH, 192)
+      for (let y = 0; y < mapH; y += 480) {
+        ground.fillRect(0, y, mapW, 192)
       }
-      for (let x = 0; x < MAP_WIDTH; x += 480) {
-        ground.fillRect(x, 0, 192, MAP_HEIGHT)
+      for (let x = 0; x < mapW; x += 480) {
+        ground.fillRect(x, 0, 192, mapH)
       }
-      ground.setDepth(-9)
+      this._mapContainer.add(ground)
     }
 
     // --- obstacles layer (skip if JSON grid handles collisions) ---
     const gridKey2 = `${key}_grid`
     const hasJsonGrid = scene.cache?.json?.has(gridKey2)
+    const hasCustomBg = scene.textures && scene.textures.exists(bgKey)
     if (!hasJsonGrid && scene.physics && scene.physics.add) {
       this._obstacleGroup = scene.physics.add.staticGroup()
 
@@ -388,7 +495,6 @@ export default class MapManager {
           this._obstacleGroup.add(zone)
         } else {
           const rect = scene.add.rectangle(obs.x + obs.width / 2, obs.y + obs.height / 2, obs.width, obs.height, 0xb0c4de, 0.6)
-          rect.setDepth(-8)
           this._obstacleGroup.add(rect)
           rect.body.setSize(obs.width, obs.height)
           rect.body.setOffset(-obs.width / 2, -obs.height / 2)
@@ -398,29 +504,14 @@ export default class MapManager {
 
     // --- decorations layer (map name label) ---
     if (scene.add.text) {
-      const label = scene.add.text(MAP_WIDTH / 2, 48, config.name, {
+      const label = scene.add.text(mapW / 2, 48, config.name, {
         fontSize: '28px',
         color: '#3366aa',
         fontFamily: 'Comic Sans MS, cursive'
       })
       label.setOrigin(0.5, 0)
-      label.setDepth(-7)
-    }
-
-    // --- zones layer (exit zones as invisible overlap areas) ---
-    if (scene.physics && scene.physics.add) {
-      this._exitZoneBodies = []
-      for (const ez of config.exitZones) {
-        const zone = scene.add.zone(
-          ez.x + ez.width / 2,
-          ez.y + ez.height / 2,
-          ez.width,
-          ez.height
-        )
-        scene.physics.add.existing(zone, true) // static body
-        zone.targetMap = ez.targetMap
-        this._exitZoneBodies.push(zone)
-      }
+      label.setDepth(1)
+      this._mapContainer.add(label)
     }
   }
 

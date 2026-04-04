@@ -13,12 +13,18 @@ export default class Powerup extends Phaser.Physics.Arcade.Sprite {
    * @param {string} type - 'manzana' | 'maruchan' | 'energetica' | 'botellita'
    */
   constructor (scene, x, y, type) {
-    super(scene, x, y, 'powerups')
+    super(scene, x, y, type)
 
     scene.add.existing(this)
     scene.physics.add.existing(this, true) // static body
 
     this.powerupType = type
+
+    // Play shimmer animation if available
+    const animKey = `powerup_${type}`
+    if (scene.anims?.exists(animKey)) {
+      this.play(animKey)
+    }
   }
 
   /**

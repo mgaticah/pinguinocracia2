@@ -58,8 +58,13 @@ export default class GameScene extends Phaser.Scene {
 
     // Collision: player vs obstacle layer
     const obstacleLayer = this.mapManager.getObstacleLayer()
+    this._obstacleColliders = []
     if (obstacleLayer) {
-      this.physics.add.collider(this.player, obstacleLayer)
+      this._obstacleColliders.push(
+        this.physics.add.collider(this.player, obstacleLayer),
+        this.physics.add.collider(this.enemyGroup, obstacleLayer)
+      )
+      this._obstacleLayer = obstacleLayer
     }
 
     // --- Spawn system ---
@@ -82,6 +87,13 @@ export default class GameScene extends Phaser.Scene {
     // --- Ally group and formation ---
     this.allyGroup = this.physics.add.group()
     this.formationSystem = new FormationSystem()
+
+    // Collision: allies vs obstacle layer
+    if (this._obstacleLayer) {
+      this._obstacleColliders.push(
+        this.physics.add.collider(this.allyGroup, this._obstacleLayer)
+      )
+    }
 
     // Overlap: Ally ↔ powerupGroup → smart collect
     this.physics.add.overlap(
@@ -237,6 +249,9 @@ export default class GameScene extends Phaser.Scene {
     // --- Exit zones ---
     this._isTransitioning = false
     this._setupExitZones()
+
+    // --- DEBUG: render collision zones overlay (disabled for testing) ---
+    // this._renderDebugZones()
 
     // Check if starting on Plaza Italia (handle edge case)
     if (this.currentMapKey === 'map_plaza_italia') {
@@ -444,9 +459,75 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
+   * DEBUG: Render colored rectangles for each zone in the collision JSON.
+   * Red=obstacle, Yellow=goal, Blue=enemy spawn, Green=player spawn, Orange=vehicle spawn
+   */
+  _renderDebugZones () {
+    const gridKey = `${this.currentMapKey}_grid`
+    if (!this.cache?.json?.has(gridKey)) return
+
+    const data = this.cache.json.get(gridKey)
+    const ts = data.tileSize || 48
+    const gfx = this.add.graphics()
+    gfx.setDepth(999)
+    gfx.setAlpha(0.35)
+    this._debugGfx = gfx
+
+    // Draw grid obstacles in red
+    if (data.grid) {
+      for (let row = 0; row < data.grid.length; row++) {
+        for (let col = 0; col < data.grid[row].length; col++) {
+          if (data.grid[row][col] === 1) {
+            gfx.fillStyle(0xff0000)
+            gfx.fillRect(col * ts, row * ts, ts, ts)
+          }
+        }
+      }
+    }
+
+    // Goal zones — yellow
+    if (data.goalZones) {
+      gfx.fillStyle(0xffd800)
+      for (const g of data.goalZones) {
+        gfx.fillRect(g.x - ts / 2, g.y - ts / 2, ts, ts)
+      }
+    }
+
+    // Enemy spawns — blue
+    if (data.enemySpawns) {
+      gfx.fillStyle(0x0026ff)
+      for (const s of data.enemySpawns) {
+        gfx.fillRect(s.x - ts / 2, s.y - ts / 2, ts, ts)
+      }
+    }
+
+    // Vehicle spawns — orange
+    if (data.vehicleSpawns) {
+      gfx.fillStyle(0xff6a00)
+      for (const v of data.vehicleSpawns) {
+        gfx.fillRect(v.x - ts / 2, v.y - ts / 2, ts, ts)
+      }
+    }
+
+    // Player spawn — green
+    if (data.playerSpawn) {
+      gfx.fillStyle(0x4cff00)
+      gfx.fillRect(data.playerSpawn.x - ts / 2, data.playerSpawn.y - ts / 2, ts, ts)
+    }
+  }
+
+  /**
    * Set up exit zone overlaps from MapManager.
    */
   _setupExitZones () {
+    // Clean up previous exit zones
+    if (this._exitZones) {
+      for (const z of this._exitZones) {
+        z.destroy()
+      }
+    }
+    this._exitZones = []
+
     const exitZones = this.mapManager.getExitZones(this.currentMapKey)
     if (!exitZones || exitZones.length === 0) return
 
@@ -459,6 +540,7 @@ export default class GameScene extends Phaser.Scene {
       )
       this.physics.add.existing(zone, true)
       zone.targetMap = ez.targetMap
+      this._exitZones.push(zone)
 
       this.physics.add.overlap(this.player, zone, () => {
         if (!this._isTransitioning) {
@@ -509,6 +591,7 @@ export default class GameScene extends Phaser.Scene {
       }
 
       // Load new map
+      console.log(`[GameScene] Transitioning to ${targetMapKey}`)
       this.mapManager.loadMap(targetMapKey, this)
       this.currentMapKey = targetMapKey
 
@@ -522,11 +605,24 @@ export default class GameScene extends Phaser.Scene {
       const { width: mapWidth, height: mapHeight } = this.mapManager.getMapDimensions()
       this.physics.world.setBounds(0, 0, mapWidth, mapHeight)
       this.cameras.main.setBounds(0, 0, mapWidth, mapHeight)
+      this.player.setCollideWorldBounds(true)
+
+      // Remove old obstacle colliders
+      if (this._obstacleColliders) {
+        for (const c of this._obstacleColliders) {
+          this.physics.world.removeCollider(c)
+        }
+      }
+      this._obstacleColliders = []
 
       // Collision: player vs new obstacle layer
       const obstacleLayer = this.mapManager.getObstacleLayer()
       if (obstacleLayer) {
-        this.physics.add.collider(this.player, obstacleLayer)
+        this._obstacleColliders.push(
+          this.physics.add.collider(this.player, obstacleLayer),
+          this.physics.add.collider(this.enemyGroup, obstacleLayer),
+          this.physics.add.collider(this.allyGroup, obstacleLayer)
+        )
       }
 
       // Grant a new ally (Task 14.2)
@@ -544,6 +640,13 @@ export default class GameScene extends Phaser.Scene {
 
       // Set up exit zones for the new map
       this._setupExitZones()
+
+      // Clean up old debug overlay (disabled for testing)
+      if (this._debugGfx) {
+        this._debugGfx.destroy()
+        this._debugGfx = null
+      }
+      // this._renderDebugZones()
 
       // Add ally bonus to score
       if (this.scoreSystem && this.allyGroup) {
