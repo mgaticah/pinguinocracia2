@@ -21,8 +21,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Shrink physics body to lower torso/feet area
     // Sprite is 48×48 scaled ×2 = 96×96 display.
     // Body must fit through 1-tile (48px) gaps: 20×20 * scale 2 = 40×40
-    this.body.setSize(20, 20)
-    this.body.setOffset(14, 24)
+    if (this.body?.setSize) {
+      this.body.setSize(20, 20)
+      this.body.setOffset(14, 24)
+    }
 
     // Core stats
     this.hp = 10

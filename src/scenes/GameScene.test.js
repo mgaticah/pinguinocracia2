@@ -108,7 +108,7 @@ vi.mock('../systems/MapManager.js', () => {
 
       getExitZones (key) {
         if (key === 'map_level1') {
-          return [{ x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_amunategui' }]
+          return [{ x: 3792, y: 960, width: 48, height: 192, targetMap: 'map_level2' }]
         }
         return []
       }

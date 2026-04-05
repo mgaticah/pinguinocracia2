@@ -53,6 +53,8 @@ export default class GameScene extends Phaser.Scene {
     this.player.globalCounter = this.globalCounter
     this.player.projectileGroup = this.projectileGroup
 
+    console.log(`[GameScene] GAME START — Map: ${this.currentMapKey}, Player at (${startX}, ${startY}), HP: ${this.player.hp}/${this.player.maxHp}`)
+
     // Camera follows player with smooth lerp
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1)
 
@@ -523,7 +525,7 @@ export default class GameScene extends Phaser.Scene {
     // Clean up previous exit zones
     if (this._exitZones) {
       for (const z of this._exitZones) {
-        z.destroy()
+        if (z?.destroy) z.destroy()
       }
     }
     this._exitZones = []
@@ -563,6 +565,15 @@ export default class GameScene extends Phaser.Scene {
 
     // Brief pause then load new map
     this.time.delayedCall(500, () => {
+      // --- Pre-transition state ---
+      const preEnemies = this.enemyGroup ? this.enemyGroup.getChildren().filter(e => e.active).length : 0
+      const preAllies = this.allyGroup ? this.allyGroup.getChildren().filter(a => a.active && !a.isDead).length : 0
+      const prePowerups = this.powerupGroup ? this.powerupGroup.getChildren().filter(p => p.active).length : 0
+      const preProjectiles = this.projectileGroup ? this.projectileGroup.getChildren().filter(p => p.active).length : 0
+      console.log(`[GameScene] PRE-TRANSITION from ${this.currentMapKey} → ${targetMapKey}`)
+      console.log(`  Enemies: ${preEnemies}, Allies: ${preAllies}, Powerups: ${prePowerups}, Projectiles: ${preProjectiles}`)
+      console.log(`  Player HP: ${this.player?.hp}/${this.player?.maxHp}, Molotovs: ${this.globalCounter?.molotovs}, Score: ${this.scoreSystem?.score}`)
+
       // Clear enemies
       if (this.enemyGroup) {
         this.enemyGroup.clear(true, true)
@@ -608,7 +619,7 @@ export default class GameScene extends Phaser.Scene {
       this.player.setCollideWorldBounds(true)
 
       // Remove old obstacle colliders
-      if (this._obstacleColliders) {
+      if (this._obstacleColliders && this.physics?.world?.removeCollider) {
         for (const c of this._obstacleColliders) {
           this.physics.world.removeCollider(c)
         }
@@ -632,6 +643,7 @@ export default class GameScene extends Phaser.Scene {
       if (this.allyGroup && entry) {
         const allies = this.allyGroup.getChildren().filter(a => a.active && !a.isDead)
         const total = allies.length
+        console.log(`[GameScene] After transition: ${total} allies active`)
         for (let i = 0; i < total; i++) {
           const offset = this.formationSystem.getPosition(i, total)
           allies[i].setPosition(entry.x + offset.x, entry.y + offset.y)
@@ -661,6 +673,15 @@ export default class GameScene extends Phaser.Scene {
       }
 
       this._isTransitioning = false
+
+      // --- Post-transition state ---
+      const postEnemies = this.enemyGroup ? this.enemyGroup.getChildren().filter(e => e.active).length : 0
+      const postAllies = this.allyGroup ? this.allyGroup.getChildren().filter(a => a.active && !a.isDead).length : 0
+      const postPowerups = this.powerupGroup ? this.powerupGroup.getChildren().filter(p => p.active).length : 0
+      console.log(`[GameScene] POST-TRANSITION to ${this.currentMapKey}`)
+      console.log(`  Enemies: ${postEnemies}, Allies: ${postAllies}, Powerups: ${postPowerups}`)
+      console.log(`  Player pos: (${Math.round(this.player?.x)}, ${Math.round(this.player?.y)})`)
+      console.log(`  Player HP: ${this.player?.hp}/${this.player?.maxHp}, Molotovs: ${this.globalCounter?.molotovs}`)
     })
   }
 
@@ -669,6 +690,9 @@ export default class GameScene extends Phaser.Scene {
    * 20% chance AliadoPunk, 80% chance AliadoEstandar or AliadoRapido (50/50).
    */
   _grantNewAlly () {
+    const allyCount = this.allyGroup ? this.allyGroup.getChildren().filter(a => a.active && !a.isDead).length : 0
+    console.log(`[GameScene] _grantNewAlly called. Current allies: ${allyCount}, map: ${this.currentMapKey}`)
+
     const entry = this.mapManager.getEntryPoint(this.currentMapKey)
     const x = entry ? entry.x : 192
     const y = entry ? entry.y : 1080

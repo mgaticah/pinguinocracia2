@@ -228,16 +228,16 @@ describe('BootScene', () => {
     })
 
     it('should use correct frame ranges for character attack animations', () => {
-      // attack_up=[3,4], attack_down=[8,9], attack_left=[13,14], attack_right=[18,19]
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [3, 4] })
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [8, 9] })
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [13, 14] })
-      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [18, 19] })
+      // attack_up=[3,4,3], attack_down=[8,9,8], attack_left=[13,14,13], attack_right=[18,19,18]
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [3, 4, 3] })
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [8, 9, 8] })
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [13, 14, 13] })
+      expect(scene.anims.generateFrameNumbers).toHaveBeenCalledWith('player', { frames: [18, 19, 18] })
     })
 
     it('should set attack animations to play once (repeat: 0)', () => {
       const attackDown = scene._anims.get('player_attack_down')
-      expect(attackDown.frameRate).toBe(4)
+      expect(attackDown.frameRate).toBe(6)
       expect(attackDown.repeat).toBe(0)
     })
 

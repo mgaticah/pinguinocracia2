@@ -38,7 +38,7 @@ describe('MapManager', () => {
     ]
 
     it('should define exactly 4 maps', () => {
-      expect(Object.keys(MAP_CONFIGS)).toHaveLength(4)
+      expect(Object.keys(MAP_CONFIGS)).toHaveLength(5)
     })
 
     it.each(expectedKeys)('should contain map "%s"', (key) => {
@@ -110,7 +110,7 @@ describe('MapManager', () => {
 
   describe('constructor', () => {
     it('should initialize maps with all 4 configs', () => {
-      expect(manager.maps.size).toBe(4)
+      expect(manager.maps.size).toBe(5)
     })
 
     it('should start with no current map', () => {
@@ -194,7 +194,7 @@ describe('MapManager', () => {
     it('should return exit zones for a valid map', () => {
       const zones = manager.getExitZones('map_level1')
       expect(zones.length).toBe(1)
-      expect(zones[0]).toHaveProperty('targetMap', 'map_amunategui')
+      expect(zones[0]).toHaveProperty('targetMap', 'map_level2')
       expect(zones[0]).toHaveProperty('width')
       expect(zones[0]).toHaveProperty('height')
     })

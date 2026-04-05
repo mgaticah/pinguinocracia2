@@ -23,8 +23,10 @@ export default class CamionLanzaAgua extends Enemy {
     })
 
     // Vehicles use 96×96 frames — adjust body for larger sprite
-    this.body.setSize(48, 32)
-    this.body.setOffset(24, 56)
+    if (this.body?.setSize) {
+      this.body.setSize(48, 32)
+      this.body.setOffset(24, 56)
+    }
 
     this._chorroActive = false
     this._chorroGraphics = null
