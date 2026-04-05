@@ -58,8 +58,47 @@ export default class BootScene extends Phaser.Scene {
 
   create () {
     this._generatePlaceholderTextures()
+    this._logAssetStatus()
     this._registerAnimations()
     this.scene.start('TitleScene')
+  }
+
+  /**
+   * Log which assets loaded from real PNGs vs procedural placeholders.
+   */
+  _logAssetStatus () {
+    if (!this.textures?.get) return
+
+    const characters = ['player', 'policiaEstandar', 'policiaEspecial', 'aliadoEstandar', 'aliadoRapido', 'aliadoPunk']
+    const vehicles = ['camionAgua', 'camionGas']
+    const powerups = ['manzana', 'maruchan', 'energetica', 'botellita']
+    const maps = ['map_level1_bg', 'map_level2_bg']
+    const extras = ['splashscreen', 'celebracion', 'piedra', 'molotov']
+
+    const allKeys = [...characters, ...vehicles, ...powerups, ...maps, ...extras]
+    const real = []
+    const placeholder = []
+    const missing = []
+
+    for (const key of allKeys) {
+      if (!this.textures.exists(key)) {
+        missing.push(key)
+      } else {
+        const tex = this.textures.get(key)
+        const src = tex?.source?.[0]
+        const isReal = src?.image?.src && !src.image.src.startsWith('data:')
+        if (isReal) {
+          real.push(key)
+        } else {
+          placeholder.push(key)
+        }
+      }
+    }
+
+    console.log(`[BootScene] Assets loaded: ${real.length} real, ${placeholder.length} placeholder, ${missing.length} missing`)
+    if (real.length > 0) console.log(`  Real PNGs: ${real.join(', ')}`)
+    if (placeholder.length > 0) console.log(`  Placeholders: ${placeholder.join(', ')}`)
+    if (missing.length > 0) console.warn(`  ⚠ MISSING: ${missing.join(', ')}`)
   }
 
   /**

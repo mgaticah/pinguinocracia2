@@ -3,8 +3,10 @@ import EventBus from '../EventBus.js'
 import Projectile from './Projectile.js'
 
 const ATTACK_RANGE = 150
-const FOLLOW_DISTANCE = 60
 const ATTACK_CLOSE_RANGE = 120
+const MIN_PLAYER_DISTANCE = 48  // 1 cuerpo — no acercarse más
+const MAX_PLAYER_DISTANCE = 480 // 10 cuerpos — no alejarse más
+const REGROUP_DISTANCE = 200    // al reagrupar, vuelve hasta ~4 cuerpos del player
 
 /**
  * Ally — Base class for all ally types.
@@ -47,49 +49,156 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
-   * Main update loop.
-   * If enemy in range → attack, else → follow player using formation offset.
+   * Main update loop — state machine: advance / combat / regroup.
+   * - advance: move toward nearest exit zone (goal), staying within 10 cuerpos of player
+   * - combat: enemy within attack range, engage autonomously
+   * - regroup: too far from player (>10 cuerpos), return to player
    * @param {number} delta - ms since last frame
    */
   update (delta) {
     if (this.isDead || !this.active) return
 
+    const player = this.scene?.player
+    const distToPlayer = player ? Math.sqrt((this.x - player.x) ** 2 + (this.y - player.y) ** 2) : 0
+
+    // Check for nearby enemies
     const enemies = this._getEnemies()
     const nearest = this._findNearestEnemy(enemies)
 
-    if (nearest) {
+    // State selection
+    if (distToPlayer > MAX_PLAYER_DISTANCE) {
+      // Too far from player — regroup
+      this._doRegroup(player)
+    } else if (nearest) {
+      // Enemy in range — fight
       this.attackNearestEnemy(nearest)
     } else {
-      const player = this.scene && this.scene.player
-      if (player) {
-        this.followPlayer(player, this._formationOffset)
-      }
+      // No enemies — advance toward goal, loosely following player
+      this._doAdvance(player)
     }
   }
 
   /**
-   * Move toward player + formation offset position.
+   * Advance toward the nearest exit zone (goal).
+   * Keeps at least 1 cuerpo (48px) from the player.
+   * Falls back to loose follow if no exit zones exist.
    * @param {object} player
-   * @param {{ x: number, y: number }} formationOffset
    */
-  followPlayer (player, formationOffset) {
-    const targetX = player.x + (formationOffset ? formationOffset.x : 0)
-    const targetY = player.y + (formationOffset ? formationOffset.y : 0)
+  _doAdvance (player) {
+    const goal = this._getGoalPosition()
 
-    const dx = targetX - this.x
-    const dy = targetY - this.y
+    if (!goal) {
+      // No exit zone — loosely follow player at distance
+      if (player) this._looseFollow(player)
+      else this.setVelocity(0, 0)
+      this._updateAnimation()
+      return
+    }
+
+    // Head straight for the goal
+    const dx = goal.x - this.x
+    const dy = goal.y - this.y
     const dist = Math.sqrt(dx * dx + dy * dy)
 
-    if (dist > FOLLOW_DISTANCE / 3) {
+    if (dist > 24) {
+      this.setVelocity((dx / dist) * this.speed, (dy / dist) * this.speed)
+    } else {
+      this.setVelocity(0, 0)
+    }
+
+    // If too close to player, nudge away
+    if (player) {
+      const pdx = this.x - player.x
+      const pdy = this.y - player.y
+      const pDist = Math.sqrt(pdx * pdx + pdy * pdy)
+      if (pDist < MIN_PLAYER_DISTANCE && pDist > 0) {
+        const pushX = (pdx / pDist) * this.speed * 0.5
+        const pushY = (pdy / pDist) * this.speed * 0.5
+        this.setVelocity(pushX, pushY)
+      }
+    }
+
+    this._updateAnimation()
+  }
+
+  /**
+   * Loosely follow the player keeping ~2 cuerpos distance.
+   * Used when there's no exit zone on the map.
+   * @param {object} player
+   */
+  _looseFollow (player) {
+    const dx = player.x - this.x
+    const dy = player.y - this.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    if (dist > MIN_PLAYER_DISTANCE * 2) {
+      this.setVelocity((dx / dist) * this.speed, (dy / dist) * this.speed)
+    } else if (dist < MIN_PLAYER_DISTANCE) {
+      // Too close — push away
+      const awayX = -dx / (dist || 1)
+      const awayY = -dy / (dist || 1)
+      this.setVelocity(awayX * this.speed * 0.5, awayY * this.speed * 0.5)
+    } else {
+      this.setVelocity(0, 0)
+    }
+  }
+
+  /**
+   * Regroup: return toward the player when too far away.
+   * @param {object} player
+   */
+  _doRegroup (player) {
+    if (!player) return
+
+    const dx = player.x - this.x
+    const dy = player.y - this.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    if (dist > REGROUP_DISTANCE) {
+      // Run back toward player at full speed
       this.setVelocity(
-        (dx / dist) * this.speed,
-        (dy / dist) * this.speed
+        (dx / dist) * this.speed * 1.2,
+        (dy / dist) * this.speed * 1.2
       )
     } else {
       this.setVelocity(0, 0)
     }
 
-    // Direction-based animation
+    this._updateAnimation()
+  }
+
+  /**
+   * Get the nearest exit zone center as the goal position.
+   * @returns {{ x: number, y: number }|null}
+   */
+  _getGoalPosition () {
+    if (!this.scene?.mapManager?.getExitZones || !this.scene?.currentMapKey) return null
+
+    const exits = this.scene.mapManager.getExitZones(this.scene.currentMapKey)
+    if (!exits || exits.length === 0) return null
+
+    let nearest = null
+    let minDist = Infinity
+
+    for (const ez of exits) {
+      const cx = ez.x + ez.width / 2
+      const cy = ez.y + ez.height / 2
+      const dx = cx - this.x
+      const dy = cy - this.y
+      const dist = dx * dx + dy * dy
+      if (dist < minDist) {
+        minDist = dist
+        nearest = { x: cx, y: cy }
+      }
+    }
+
+    return nearest
+  }
+
+  /**
+   * Update walk/idle animation based on current velocity.
+   */
+  _updateAnimation () {
     const vx = this.body?.velocity?.x ?? 0
     const vy = this.body?.velocity?.y ?? 0
     const textureKey = this.texture.key
@@ -110,6 +219,42 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
         this.play(idleKey, true)
       }
     }
+  }
+
+  /**
+   * Move toward player + formation offset position.
+   * @param {object} player
+   * @param {{ x: number, y: number }} formationOffset
+   */
+  followPlayer (player, formationOffset) {
+    const targetX = player.x + (formationOffset ? formationOffset.x : 0)
+    const targetY = player.y + (formationOffset ? formationOffset.y : 0)
+
+    const dx = targetX - this.x
+    const dy = targetY - this.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    // Check distance to player directly (not formation offset)
+    const pdx = this.x - player.x
+    const pdy = this.y - player.y
+    const pDist = Math.sqrt(pdx * pdx + pdy * pdy)
+
+    if (pDist < MIN_PLAYER_DISTANCE && pDist > 0) {
+      // Too close to player — push away gently
+      this.setVelocity(
+        (pdx / pDist) * this.speed * 0.5,
+        (pdy / pDist) * this.speed * 0.5
+      )
+    } else if (dist > MIN_PLAYER_DISTANCE) {
+      this.setVelocity(
+        (dx / dist) * this.speed,
+        (dy / dist) * this.speed
+      )
+    } else {
+      this.setVelocity(0, 0)
+    }
+
+    this._updateAnimation()
   }
 
   /**
@@ -131,27 +276,7 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
       this.setVelocity(0, 0)
     }
 
-    // Direction-based animation
-    const vx = this.body?.velocity?.x ?? 0
-    const vy = this.body?.velocity?.y ?? 0
-    const textureKey = this.texture.key
-
-    if (Math.abs(vx) > 1 || Math.abs(vy) > 1) {
-      if (Math.abs(vy) >= Math.abs(vx)) {
-        this._lastDirection = vy < 0 ? 'up' : 'down'
-      } else {
-        this._lastDirection = vx < 0 ? 'left' : 'right'
-      }
-      const walkKey = `${textureKey}_walk_${this._lastDirection}`
-      if (this.scene?.anims?.exists(walkKey)) {
-        this.play(walkKey, true)
-      }
-    } else {
-      const idleKey = `${textureKey}_idle_${this._lastDirection}`
-      if (this.scene?.anims?.exists(idleKey)) {
-        this.play(idleKey, true)
-      }
-    }
+    this._updateAnimation()
 
     // Attack if cooldown allows
     const now = Date.now()

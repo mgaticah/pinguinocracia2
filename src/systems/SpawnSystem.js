@@ -5,7 +5,7 @@ import CamionLanzaGas from '../entities/CamionLanzaGas.js'
 
 const MIN_SPAWN_DISTANCE = 300
 
-const INTERVAL_SEQUENCE = [20000, 45000, 30000, 20000, 15000, 10000, 5000]
+const INTERVAL_SEQUENCE = [10000, 30000, 20000, 15000, 10000, 7000, 5000]
 
 /**
  * Squad compositions — each is an array of { type, count }.

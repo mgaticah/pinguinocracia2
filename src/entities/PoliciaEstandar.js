@@ -2,7 +2,7 @@ import Enemy from './Enemy.js'
 import EventBus from '../EventBus.js'
 
 const BASE_SPEED = 120
-const DETECTION_RANGE = 480   // 10 cuerpos (10 × 48px)
+const DETECTION_RANGE = 720   // 15 cuerpos (15 × 48px)
 const MELEE_RANGE = 48        // 1 cuerpo
 const CHASE_SPEED_MULT = 1.10 // +10% al detectar escolar
 const AGGRO_SPEED_MULT = 1.15 // +15% si le lanzan piedras

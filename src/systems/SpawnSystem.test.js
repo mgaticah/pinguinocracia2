@@ -91,7 +91,7 @@ describe('SpawnSystem', () => {
     })
 
     it('should have intervalMs equal to first element of sequence', () => {
-      expect(spawn.intervalMs).toBe(20000)
+      expect(spawn.intervalMs).toBe(10000)
     })
 
     it('should store the interval sequence', () => {
@@ -104,8 +104,8 @@ describe('SpawnSystem', () => {
   // -----------------------------------------------------------------------
 
   describe('INTERVAL_SEQUENCE', () => {
-    it('should be [20000, 45000, 30000, 20000, 15000, 10000, 5000]', () => {
-      expect(INTERVAL_SEQUENCE).toEqual([20000, 45000, 30000, 20000, 15000, 10000, 5000])
+    it('should be [10000, 30000, 20000, 15000, 10000, 7000, 5000]', () => {
+      expect(INTERVAL_SEQUENCE).toEqual([10000, 30000, 20000, 15000, 10000, 7000, 5000])
     })
 
     it('minimum interval should be 5000ms', () => {
@@ -268,7 +268,7 @@ describe('SpawnSystem', () => {
 
     it('should update intervalMs to match new level', () => {
       spawn.escalateDifficulty('map_barros_arana', 0)
-      expect(spawn.intervalMs).toBe(45000)
+      expect(spawn.intervalMs).toBe(30000)
     })
 
     it('should not exceed max difficulty level', () => {

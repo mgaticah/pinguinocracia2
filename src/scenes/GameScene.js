@@ -127,6 +127,30 @@ export default class GameScene extends Phaser.Scene {
       b.y -= (dy / dist) * push
     })
 
+    // Collider: allies bounce off each other (5px push, no damage)
+    this.physics.add.collider(this.allyGroup, this.allyGroup, (a, b) => {
+      const dx = a.x - b.x
+      const dy = a.y - b.y
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1
+      const push = 5
+      a.x += (dx / dist) * push
+      a.y += (dy / dist) * push
+      b.x -= (dx / dist) * push
+      b.y -= (dy / dist) * push
+    })
+
+    // Collider: player bounces off allies (5px push, no damage)
+    this.physics.add.collider(this.player, this.allyGroup, (player, ally) => {
+      const dx = player.x - ally.x
+      const dy = player.y - ally.y
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1
+      const push = 5
+      player.x += (dx / dist) * push
+      player.y += (dy / dist) * push
+      ally.x -= (dx / dist) * push
+      ally.y -= (dy / dist) * push
+    })
+
     // --- Effect system ---
     this.effectSystem = new EffectSystem()
 
@@ -726,6 +750,16 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.allyGroup) {
       this.allyGroup.add(ally)
+    }
+
+    // Log ally texture status
+    const texKey = ally.texture?.key
+    if (texKey && this.textures?.get) {
+      const tex = this.textures.get(texKey)
+      const isPlaceholder = !tex?.source?.[0]?.image?.src || tex.source[0].image.src.startsWith('data:')
+      console.log(`[GameScene] New ally: ${ally.type} (texture: ${texKey}, ${isPlaceholder ? 'PLACEHOLDER' : 'real PNG'})`)
+    } else {
+      console.log(`[GameScene] New ally: ${ally.type} (texture: ${texKey || 'unknown'})`)
     }
 
     // Show "Nuevo aliado" message

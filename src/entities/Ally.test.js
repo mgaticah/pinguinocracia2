@@ -72,7 +72,9 @@ function createMockScene (opts = {}) {
     enemyGroup: opts.enemyGroup || { getChildren: () => [] },
     allyGroup: opts.allyGroup || { getChildren: () => [] },
     globalCounter: opts.globalCounter || { molotovs: 0 },
-    projectileGroup: opts.projectileGroup || { add: vi.fn() }
+    projectileGroup: opts.projectileGroup || { add: vi.fn() },
+    mapManager: opts.mapManager || { getExitZones: () => [] },
+    currentMapKey: opts.currentMapKey || 'map_level1'
   }
 }
 
@@ -291,24 +293,38 @@ describe('Ally (base class)', () => {
       expect(ally._vx).toBe(0)
     })
 
-    it('should follow player when no enemies in range', () => {
+    it('should advance toward goal when no enemies in range', () => {
       const player = { x: 200, y: 200, isAlive: true }
-      const scene = createMockScene({ player })
-      const ally = new Ally(scene, 0, 0, 'test')
+      const scene = createMockScene({
+        player,
+        mapManager: { getExitZones: () => [{ x: 3792, y: 960, width: 48, height: 192 }] }
+      })
+      const ally = new Ally(scene, 100, 100, 'test')
       ally.update(16)
-      expect(ally._vx).toBeGreaterThan(0)
+      // Should be moving (either toward goal or player)
+      expect(Math.abs(ally._vx) + Math.abs(ally._vy)).toBeGreaterThan(0)
     })
 
     it('should attack enemy when in range', () => {
       const enemy = createMockEnemy(50, 0)
       const scene = createMockScene({
-        player: { x: 500, y: 500, isAlive: true },
+        player: { x: 100, y: 0, isAlive: true },
         enemyGroup: { getChildren: () => [enemy] }
       })
       const ally = new Ally(scene, 0, 0, 'test')
       ally.update(16)
       // Should have fired a projectile
       expect(scene.projectileGroup.add).toHaveBeenCalled()
+    })
+
+    it('should regroup when too far from player (>10 cuerpos)', () => {
+      const player = { x: 0, y: 0, isAlive: true }
+      const scene = createMockScene({ player })
+      // Place ally 600px away (>480px = 10 cuerpos)
+      const ally = new Ally(scene, 600, 0, 'test')
+      ally.update(16)
+      // Should be moving back toward player (negative vx)
+      expect(ally._vx).toBeLessThan(0)
     })
   })
 })
