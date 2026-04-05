@@ -211,7 +211,7 @@ describe('FinalEventSystem', () => {
 
   describe('squad compositions', () => {
     it('ALL_ENEMY_TYPES should include all 4 types', () => {
-      expect(ALL_ENEMY_TYPES).toEqual(['estandar', 'montado', 'agua', 'gas'])
+      expect(ALL_ENEMY_TYPES).toEqual(['estandar', 'especial', 'agua', 'gas'])
     })
 
     it('every composition should include all enemy types across the set', () => {

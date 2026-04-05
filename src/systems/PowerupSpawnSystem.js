@@ -73,6 +73,9 @@ export default class PowerupSpawnSystem {
       this.powerupGroup.add(powerup)
     }
 
+    const totalActive = this.powerupGroup?.getChildren ? this.powerupGroup.getChildren().filter(p => p.active).length : 0
+    console.log(`[PowerupSpawnSystem] Spawned "${type}" at (${Math.round(point.x)}, ${Math.round(point.y)}). Total active: ${totalActive}`)
+
     return powerup
   }
 

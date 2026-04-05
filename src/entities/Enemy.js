@@ -54,7 +54,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // Points table for scoring
     this._pointsTable = {
       estandar: 10,
-      montado: 20,
+      especial: 20,
       agua: 50,
       gas: 40
     }

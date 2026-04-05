@@ -22,9 +22,15 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('map_level2_bg', 'assets/level2.png')
     this.load.json('map_level2_grid', 'assets/collision_level2.json')
 
+    // Level complete celebration background
+    this.load.image('celebracion', 'assets/celebracion.png')
+
+    // Splash screen / title background
+    this.load.image('splashscreen', 'assets/splashscreen.png')
+
     // --- Load real spritesheets (if the file exists, it replaces the placeholder) ---
     // Characters: 5 cols × 4 rows, 48×48 per frame (PNG must be 240×192px)
-    const characters = ['player', 'policiaEstandar', 'policiaMontado', 'aliadoEstandar', 'aliadoRapido', 'aliadoPunk']
+    const characters = ['player', 'policiaEstandar', 'policiaEspecial', 'aliadoEstandar', 'aliadoRapido', 'aliadoPunk']
     for (const key of characters) {
       this.load.spritesheet(key, `assets/${key}.png`, { frameWidth: 48, frameHeight: 48 })
     }
@@ -68,7 +74,7 @@ export default class BootScene extends Phaser.Scene {
     const characters = [
       { key: 'player', color: 0x3366ff, label: 'P' },
       { key: 'policiaEstandar', color: 0x666666, label: 'PE' },
-      { key: 'policiaMontado', color: 0x888888, label: 'PM' },
+      { key: 'policiaEspecial', color: 0x888888, label: 'PE2' },
       { key: 'aliadoEstandar', color: 0x33cc33, label: 'AE' },
       { key: 'aliadoRapido', color: 0x66ff66, label: 'AR' },
       { key: 'aliadoPunk', color: 0xff6633, label: 'AP' }
@@ -127,7 +133,7 @@ export default class BootScene extends Phaser.Scene {
   _registerAnimations () {
     // Character animations (4 directions × walk + idle)
     const characterKeys = [
-      'player', 'policiaEstandar', 'policiaMontado',
+      'player', 'policiaEstandar', 'policiaEspecial',
       'aliadoEstandar', 'aliadoRapido', 'aliadoPunk'
     ]
 

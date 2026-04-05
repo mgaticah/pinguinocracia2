@@ -260,6 +260,9 @@ export default class GameScene extends Phaser.Scene {
       this.finalEventSystem.start(90)
       this._showMessage('Manifestación final')
     }
+
+    // --- Level start diagnostic log ---
+    this._logLevelState('LEVEL START')
   }
 
   update (time, delta) {
@@ -554,6 +557,7 @@ export default class GameScene extends Phaser.Scene {
 
   /**
    * Transition to a new map, preserving player state and allies.
+   * Shows a celebration screen first, then proceeds on user click.
    * @param {string} targetMapKey
    */
   _transitionToMap (targetMapKey) {
@@ -562,6 +566,24 @@ export default class GameScene extends Phaser.Scene {
 
     // Emit map:transition event
     EventBus.emit('map:transition', { mapKey: targetMapKey })
+
+    // Get current level name for the celebration screen
+    const currentConfig = this.mapManager?.maps?.get(this.currentMapKey)
+    const levelName = currentConfig?.name || this.currentMapKey
+
+    // Pause game and show celebration screen
+    if (this.physics?.pause) this.physics.pause()
+    this.scene.pause('GameScene')
+    this.scene.launch('LevelCompleteScene', { levelName, targetMap: targetMapKey })
+  }
+
+  /**
+   * Called by LevelCompleteScene when the user clicks "Continuar".
+   * Performs the actual map transition.
+   * @param {string} targetMapKey
+   */
+  _proceedTransition (targetMapKey) {
+    if (this.physics?.resume) this.physics.resume()
 
     // Brief pause then load new map
     this.time.delayedCall(500, () => {
@@ -674,14 +696,8 @@ export default class GameScene extends Phaser.Scene {
 
       this._isTransitioning = false
 
-      // --- Post-transition state ---
-      const postEnemies = this.enemyGroup ? this.enemyGroup.getChildren().filter(e => e.active).length : 0
-      const postAllies = this.allyGroup ? this.allyGroup.getChildren().filter(a => a.active && !a.isDead).length : 0
-      const postPowerups = this.powerupGroup ? this.powerupGroup.getChildren().filter(p => p.active).length : 0
-      console.log(`[GameScene] POST-TRANSITION to ${this.currentMapKey}`)
-      console.log(`  Enemies: ${postEnemies}, Allies: ${postAllies}, Powerups: ${postPowerups}`)
-      console.log(`  Player pos: (${Math.round(this.player?.x)}, ${Math.round(this.player?.y)})`)
-      console.log(`  Player HP: ${this.player?.hp}/${this.player?.maxHp}, Molotovs: ${this.globalCounter?.molotovs}`)
+      // --- Post-transition diagnostic log ---
+      this._logLevelState('POST-TRANSITION')
     })
   }
 
@@ -811,6 +827,34 @@ export default class GameScene extends Phaser.Scene {
     this._zoomLevel = Math.max(this._minZoom, this._zoomLevel - this._zoomStep)
     this.cameras.main.setZoom(this._zoomLevel)
     EventBus.emit('zoom:changed', { zoom: this._zoomLevel })
+  }
+
+  /**
+   * Log a comprehensive diagnostic snapshot of the current level state.
+   * @param {string} label - Context label (e.g. 'LEVEL START', 'POST-TRANSITION')
+   */
+  _logLevelState (label) {
+    const enemies = this.enemyGroup?.getChildren ? this.enemyGroup.getChildren().filter(e => e.active) : []
+    const allies = this.allyGroup?.getChildren ? this.allyGroup.getChildren().filter(a => a.active && !a.isDead) : []
+    const powerups = this.powerupGroup?.getChildren ? this.powerupGroup.getChildren().filter(p => p.active) : []
+    const projectiles = this.projectileGroup?.getChildren ? this.projectileGroup.getChildren().filter(p => p.active) : []
+
+    console.log(`[GameScene] === ${label} === Map: ${this.currentMapKey}`)
+    console.log(`  Player: pos(${Math.round(this.player?.x || 0)}, ${Math.round(this.player?.y || 0)}), HP: ${this.player?.hp}/${this.player?.maxHp}, weapon: ${this.player?.weapon}, alive: ${this.player?.isAlive}`)
+    console.log(`  Enemies: ${enemies.length} active [${enemies.map(e => e.enemyType || e.texture?.key || '?').join(', ')}]`)
+    console.log(`  Allies: ${allies.length} active [${allies.map(a => `${a.type || '?'}(HP:${a.hp})`).join(', ')}]`)
+    console.log(`  Powerups: ${powerups.length} active [${powerups.map(p => p.powerupType || '?').join(', ')}]`)
+    console.log(`  Projectiles: ${projectiles.length} active`)
+    console.log(`  Molotovs: ${this.globalCounter?.molotovs}, Score: ${this.scoreSystem?.score}`)
+    console.log(`  SpawnSystem difficulty: ${this.spawnSystem?.difficultyLevel}, interval: ${this.spawnSystem?.intervalMs}ms`)
+
+    // Map info
+    if (this.mapManager?.getSpawnPoints) {
+      const spawns = this.mapManager.getSpawnPoints(this.currentMapKey)
+      const vSpawns = this.mapManager.getVehicleSpawnPoints?.(this.currentMapKey) || []
+      const exits = this.mapManager.getExitZones?.(this.currentMapKey) || []
+      console.log(`  Map spawns: ${spawns.length} enemy, ${vSpawns.length} vehicle, ${exits.length} exits`)
+    }
   }
 
   /**

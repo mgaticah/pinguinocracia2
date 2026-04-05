@@ -19,10 +19,16 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   /**
-   * Draws the notebook-style background programmatically:
-   * cream/white fill, horizontal blue lines, red left margin.
+   * Draws the background: splashscreen image if available, otherwise notebook-style fallback.
    */
   _drawNotebookBackground (w, h) {
+    if (this.textures && this.textures.exists('splashscreen')) {
+      const bg = this.add.image(w / 2, h / 2, 'splashscreen')
+      bg.setDisplaySize(w, h)
+      return
+    }
+
+    // Fallback: notebook-style procedural background
     const gfx = this.add.graphics()
 
     // Cream paper fill
@@ -55,10 +61,10 @@ export default class TitleScene extends Phaser.Scene {
     this.logoText = this.add.text(w / 2, logoY, 'PINGÜINOCRACIA 2', {
       fontFamily: 'Georgia, "Times New Roman", serif',
       fontSize: '96px',
-      color: '#1a3a6a',
+      color: '#ffffff',
       fontStyle: 'bold',
-      stroke: '#0d1f3c',
-      strokeThickness: 3,
+      stroke: '#000000',
+      strokeThickness: 6,
       align: 'center'
     }).setOrigin(0.5)
 
@@ -97,8 +103,10 @@ export default class TitleScene extends Phaser.Scene {
       const text = this.add.text(x, y, label, {
         fontFamily: 'Georgia, "Times New Roman", serif',
         fontSize: '28px',
-        color: '#1a3a6a',
-        align: 'center'
+        color: '#ffffff',
+        align: 'center',
+        stroke: '#000000',
+        strokeThickness: 2
       }).setOrigin(0.5)
 
       // Interactive hit zone
@@ -108,13 +116,13 @@ export default class TitleScene extends Phaser.Scene {
       hitZone.on('pointerover', () => {
         bg.clear()
         this._drawButtonBg(bg, x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, true)
-        text.setColor('#ffffff')
+        text.setColor('#ffdd44')
       })
 
       hitZone.on('pointerout', () => {
         bg.clear()
         this._drawButtonBg(bg, x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, false)
-        text.setColor('#1a3a6a')
+        text.setColor('#ffffff')
       })
 
       // Click handlers
@@ -129,12 +137,12 @@ export default class TitleScene extends Phaser.Scene {
    */
   _drawButtonBg (gfx, x, y, w, h, hovered) {
     if (hovered) {
-      gfx.fillStyle(0x2244aa, 0.9)
+      gfx.fillStyle(0x2244aa, 0.85)
     } else {
-      gfx.fillStyle(0xf5f0e0, 0.8)
+      gfx.fillStyle(0x000000, 0.5)
     }
     gfx.fillRoundedRect(x, y, w, h, 8)
-    gfx.lineStyle(2, 0x1a3a6a, 1)
+    gfx.lineStyle(2, 0xffffff, 0.6)
     gfx.strokeRoundedRect(x, y, w, h, 8)
   }
 

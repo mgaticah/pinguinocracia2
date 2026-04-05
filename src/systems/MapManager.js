@@ -282,6 +282,15 @@ export default class MapManager {
       }
     }
 
+    // Log map loading info
+    const hasBg = scene?.textures?.exists(`${key}_bg`)
+    const hasGrid = scene?.cache?.json?.has(`${key}_grid`)
+    const obsTiles = this._walkableGrid.flat().filter(v => v === 1).length
+    console.log(`[MapManager] Loaded "${key}" (${config.name})`)
+    console.log(`  Background: ${hasBg ? 'custom image' : 'procedural'}`)
+    console.log(`  Collisions: ${hasGrid ? 'JSON grid' : 'hardcoded obstacles'} (${obsTiles} obstacle tiles)`)
+    console.log(`  Entry: (${config.entryPoint.x}, ${config.entryPoint.y}), Spawns: ${config.spawnPoints.length}, Exits: ${config.exitZones.length}`)
+
     return config
   }
 

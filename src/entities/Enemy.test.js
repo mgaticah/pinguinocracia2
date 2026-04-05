@@ -244,13 +244,13 @@ describe('Enemy (base class)', () => {
 
     it('should emit enemy:killed with correct type and points', () => {
       const scene = createMockScene()
-      const enemy = new Enemy(scene, 0, 0, 'test', { type: 'montado' })
+      const enemy = new Enemy(scene, 0, 0, 'test', { type: 'especial' })
       enemy.die()
-      expect(EventBus.emit).toHaveBeenCalledWith('enemy:killed', { type: 'montado', points: 20 })
+      expect(EventBus.emit).toHaveBeenCalledWith('enemy:killed', { type: 'especial', points: 20 })
     })
 
     it('should emit correct points for each enemy type', () => {
-      const pointsMap = { estandar: 10, montado: 20, agua: 50, gas: 40 }
+      const pointsMap = { estandar: 10, especial: 20, agua: 50, gas: 40 }
       for (const [type, points] of Object.entries(pointsMap)) {
         vi.clearAllMocks()
         const scene = createMockScene()
@@ -362,30 +362,30 @@ describe('PoliciaEstandar', () => {
   })
 })
 
-describe('PoliciaMontado', () => {
-  let PoliciaMontado
+describe('PoliciaEspecial', () => {
+  let PoliciaEspecial
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    const mod = await import('./PoliciaMontado.js')
-    PoliciaMontado = mod.default
+    const mod = await import('./PoliciaEspecial.js')
+    PoliciaEspecial = mod.default
   })
 
   it('should initialize with correct stats', () => {
     const scene = createMockScene()
-    const p = new PoliciaMontado(scene, 100, 200)
-    expect(p.hp).toBe(15)
-    expect(p.maxHp).toBe(15)
-    expect(p.speed).toBe(144)
-    expect(p.damage).toBe(2)
-    expect(p.attackCooldown).toBe(1500)
-    expect(p.enemyType).toBe('montado')
+    const p = new PoliciaEspecial(scene, 100, 200)
+    expect(p.hp).toBe(20)
+    expect(p.maxHp).toBe(20)
+    expect(p.speed).toBe(180)
+    expect(p.damage).toBe(3)
+    expect(p.attackCooldown).toBe(1200)
+    expect(p.enemyType).toBe('especial')
   })
 
-  it('should have speed 1.2x base', () => {
+  it('should have speed 1.5x base', () => {
     const scene = createMockScene()
-    const p = new PoliciaMontado(scene, 0, 0)
-    expect(p.speed).toBe(120 * 1.2)
+    const p = new PoliciaEspecial(scene, 0, 0)
+    expect(p.speed).toBe(180)
   })
 
   it('should deal charge damage and push on impact', () => {
@@ -394,12 +394,12 @@ describe('PoliciaMontado', () => {
       player: target,
       enemyGroup: { getChildren: () => [] }
     })
-    const p = new PoliciaMontado(scene, 100, 200)
+    const p = new PoliciaEspecial(scene, 100, 200)
     p.target = target
 
     p.update(16)
 
-    expect(target.takeDamage).toHaveBeenCalledWith(2, expect.any(Number), expect.any(Number))
+    expect(target.takeDamage).toHaveBeenCalledWith(3, expect.any(Number), expect.any(Number))
     expect(target.setVelocity).toHaveBeenCalled()
   })
 })

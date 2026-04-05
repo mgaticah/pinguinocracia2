@@ -1,24 +1,24 @@
 import EventBus from '../EventBus.js'
 import PoliciaEstandar from '../entities/PoliciaEstandar.js'
-import PoliciaMontado from '../entities/PoliciaMontado.js'
+import PoliciaEspecial from '../entities/PoliciaEspecial.js'
 import CamionLanzaAgua from '../entities/CamionLanzaAgua.js'
 import CamionLanzaGas from '../entities/CamionLanzaGas.js'
 
 /**
  * Enemy types used during the final event — all types spawn simultaneously.
  */
-const ALL_ENEMY_TYPES = ['estandar', 'montado', 'agua', 'gas']
+const ALL_ENEMY_TYPES = ['estandar', 'especial', 'agua', 'gas']
 
 /**
  * Squad compositions for the final event — larger squads than normal maps.
  * Normal maps use squads of ~4 enemies; final event uses 5–8.
  */
 const FINAL_SQUAD_COMPOSITIONS = [
-  [{ type: 'estandar', count: 5 }, { type: 'montado', count: 2 }],
-  [{ type: 'estandar', count: 3 }, { type: 'montado', count: 2 }, { type: 'agua', count: 1 }, { type: 'gas', count: 1 }],
+  [{ type: 'estandar', count: 5 }, { type: 'especial', count: 2 }],
+  [{ type: 'estandar', count: 3 }, { type: 'especial', count: 2 }, { type: 'agua', count: 1 }, { type: 'gas', count: 1 }],
   [{ type: 'estandar', count: 4 }, { type: 'agua', count: 1 }, { type: 'gas', count: 1 }],
-  [{ type: 'montado', count: 3 }, { type: 'agua', count: 2 }, { type: 'gas', count: 1 }],
-  [{ type: 'estandar', count: 2 }, { type: 'montado', count: 3 }, { type: 'gas', count: 2 }]
+  [{ type: 'especial', count: 3 }, { type: 'agua', count: 2 }, { type: 'gas', count: 1 }],
+  [{ type: 'estandar', count: 2 }, { type: 'especial', count: 3 }, { type: 'gas', count: 2 }]
 ]
 
 /** Default duration in seconds */
@@ -169,7 +169,7 @@ export default class FinalEventSystem {
   _getEnemyClasses () {
     return {
       estandar: PoliciaEstandar,
-      montado: PoliciaMontado,
+      especial: PoliciaEspecial,
       agua: CamionLanzaAgua,
       gas: CamionLanzaGas
     }

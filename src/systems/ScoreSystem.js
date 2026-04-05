@@ -5,7 +5,7 @@ import EventBus from '../EventBus.js'
  */
 export const POINTS_TABLE = {
   estandar: 10,
-  montado: 20,
+  especial: 20,
   agua: 50,
   gas: 40
 }

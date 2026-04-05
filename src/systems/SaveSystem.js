@@ -102,7 +102,7 @@ export default class SaveSystem {
     const activeEnemyTypes = []
     const totalTime = scene.totalTime || 0
     if (totalTime >= 60) activeEnemyTypes.push('estandar')
-    if (totalTime >= 120) activeEnemyTypes.push('montado')
+    if (totalTime >= 120) activeEnemyTypes.push('especial')
     if (totalTime >= 240) activeEnemyTypes.push('agua')
     if (totalTime >= 360) activeEnemyTypes.push('gas')
 

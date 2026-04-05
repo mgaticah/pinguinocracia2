@@ -160,9 +160,9 @@ describe('SpawnSystem', () => {
       expect(types).toEqual(new Set(['estandar']))
     })
 
-    it('should enable montado at 120s', () => {
+    it('should enable especial at 120s', () => {
       const types = getEnabledTypes(120)
-      expect(types.has('montado')).toBe(true)
+      expect(types.has('especial')).toBe(true)
       expect(types.has('estandar')).toBe(true)
     })
 
@@ -177,8 +177,8 @@ describe('SpawnSystem', () => {
       expect(types.size).toBe(4)
     })
 
-    it('should not enable montado before 120s', () => {
-      expect(getEnabledTypes(119).has('montado')).toBe(false)
+    it('should not enable especial before 120s', () => {
+      expect(getEnabledTypes(119).has('especial')).toBe(false)
     })
 
     it('should not enable agua before 240s', () => {
@@ -202,12 +202,12 @@ describe('SpawnSystem', () => {
       }
     })
 
-    it('should allow montado in squads at 120s', () => {
+    it('should allow especial in squads at 120s', () => {
       // Run multiple times to check all returned types are valid
       for (let i = 0; i < 20; i++) {
         const comp = spawn.getSquadComposition(1, 120)
         for (const entry of comp) {
-          expect(['estandar', 'montado']).toContain(entry.type)
+          expect(['estandar', 'especial']).toContain(entry.type)
         }
       }
     })
@@ -216,7 +216,7 @@ describe('SpawnSystem', () => {
       for (let i = 0; i < 20; i++) {
         const comp = spawn.getSquadComposition(2, 240)
         for (const entry of comp) {
-          expect(['estandar', 'montado', 'agua']).toContain(entry.type)
+          expect(['estandar', 'especial', 'agua']).toContain(entry.type)
         }
       }
     })

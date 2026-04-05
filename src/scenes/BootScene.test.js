@@ -86,7 +86,7 @@ describe('BootScene', () => {
     scene.create()
 
     const expectedKeys = [
-      'player', 'policiaEstandar', 'policiaMontado',
+      'player', 'policiaEstandar', 'policiaEspecial',
       'aliadoEstandar', 'aliadoRapido', 'aliadoPunk',
       'camionAgua', 'camionGas',
       'manzana', 'maruchan', 'energetica', 'botellita',
@@ -154,7 +154,7 @@ describe('BootScene', () => {
 
     it('should register walk, idle, and attack animations for all 6 characters', () => {
       const characters = [
-        'player', 'policiaEstandar', 'policiaMontado',
+        'player', 'policiaEstandar', 'policiaEspecial',
         'aliadoEstandar', 'aliadoRapido', 'aliadoPunk'
       ]
       const directions = ['up', 'down', 'left', 'right']

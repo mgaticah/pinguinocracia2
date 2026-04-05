@@ -145,7 +145,7 @@ describe('SaveSystem', () => {
         allies: [{ type: 'punk', hp: 10, offsetX: 40, offsetY: 40 }],
         inventory: { molotovs: 3 },
         map: { key: 'map_lastarria', entryPoint: { x: 192, y: 1080 }, unlockedExits: [] },
-        difficulty: { totalTime: 180, spawnLevel: 3, activeEnemyTypes: ['estandar', 'montado'] },
+        difficulty: { totalTime: 180, spawnLevel: 3, activeEnemyTypes: ['estandar', 'especial'] },
         activeEffects: { energetica: { active: true, remaining: 4.5 } },
         score: 250
       }
@@ -266,7 +266,7 @@ describe('SaveSystem', () => {
         allies: [],
         inventory: { molotovs: 7 },
         map: { key: 'map_lastarria', entryPoint: { x: 192, y: 1080 }, unlockedExits: [] },
-        difficulty: { totalTime: 200, spawnLevel: 4, activeEnemyTypes: ['estandar', 'montado', 'agua'] },
+        difficulty: { totalTime: 200, spawnLevel: 4, activeEnemyTypes: ['estandar', 'especial', 'agua'] },
         activeEffects: { energetica: { active: false, remaining: 0 } },
         score: 300
       }

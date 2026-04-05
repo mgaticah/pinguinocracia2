@@ -582,8 +582,10 @@ describe('GameScene', () => {
         gameScene.player.y = y
       })
 
-      // Trigger transition
+      // Trigger transition (now shows celebration screen)
       gameScene._transitionToMap('map_amunategui')
+      // Simulate user clicking "Continuar" — calls _proceedTransition
+      gameScene._proceedTransition('map_amunategui')
     })
 
     it('should use a 500ms delay', () => {
@@ -884,12 +886,14 @@ describe('GameScene', () => {
     it('should start finalEventSystem when transitioning to plaza_italia', () => {
       gameScene.finalEventSystem.start = vi.fn()
       gameScene._transitionToMap('map_plaza_italia')
+      gameScene._proceedTransition('map_plaza_italia')
       delayedCallback()
       expect(gameScene.finalEventSystem.start).toHaveBeenCalledWith(90)
     })
 
     it('should show "Manifestación final" message when entering plaza_italia', () => {
       gameScene._transitionToMap('map_plaza_italia')
+      gameScene._proceedTransition('map_plaza_italia')
       mockScene.add.text.mockClear()
       delayedCallback()
       expect(mockScene.add.text).toHaveBeenCalledWith(
@@ -900,6 +904,7 @@ describe('GameScene', () => {
     it('should not start finalEventSystem for non-plaza maps', () => {
       gameScene.finalEventSystem.start = vi.fn()
       gameScene._transitionToMap('map_amunategui')
+      gameScene._proceedTransition('map_amunategui')
       delayedCallback()
       expect(gameScene.finalEventSystem.start).not.toHaveBeenCalled()
     })

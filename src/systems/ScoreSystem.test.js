@@ -41,7 +41,7 @@ describe('ScoreSystem', () => {
   describe('POINTS_TABLE', () => {
     it('should have correct points for each enemy type', () => {
       expect(POINTS_TABLE.estandar).toBe(10)
-      expect(POINTS_TABLE.montado).toBe(20)
+      expect(POINTS_TABLE.especial).toBe(20)
       expect(POINTS_TABLE.agua).toBe(50)
       expect(POINTS_TABLE.gas).toBe(40)
     })
@@ -76,8 +76,8 @@ describe('ScoreSystem', () => {
       expect(scoreSystem.getTotal()).toBe(10)
     })
 
-    it('should add 20 points for montado', () => {
-      scoreSystem.addKill('montado')
+    it('should add 20 points for especial', () => {
+      scoreSystem.addKill('especial')
       expect(scoreSystem.getTotal()).toBe(20)
     })
 
@@ -98,7 +98,7 @@ describe('ScoreSystem', () => {
 
     it('should accumulate points from multiple kills', () => {
       scoreSystem.addKill('estandar')
-      scoreSystem.addKill('montado')
+      scoreSystem.addKill('especial')
       scoreSystem.addKill('agua')
       expect(scoreSystem.getTotal()).toBe(80)
     })
@@ -204,7 +204,7 @@ describe('ScoreSystem', () => {
       expect(onCall).toBeDefined()
       const callback = onCall[1]
 
-      callback({ type: 'montado', points: 20 })
+      callback({ type: 'especial', points: 20 })
       expect(scoreSystem.getTotal()).toBe(20)
     })
 

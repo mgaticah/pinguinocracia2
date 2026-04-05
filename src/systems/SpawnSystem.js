@@ -1,5 +1,5 @@
 import PoliciaEstandar from '../entities/PoliciaEstandar.js'
-import PoliciaMontado from '../entities/PoliciaMontado.js'
+import PoliciaEspecial from '../entities/PoliciaEspecial.js'
 import CamionLanzaAgua from '../entities/CamionLanzaAgua.js'
 import CamionLanzaGas from '../entities/CamionLanzaGas.js'
 
@@ -13,9 +13,9 @@ const INTERVAL_SEQUENCE = [20000, 45000, 30000, 20000, 15000, 10000, 5000]
  */
 const SQUAD_COMPOSITIONS = [
   [{ type: 'estandar', count: 4 }],
-  [{ type: 'estandar', count: 3 }, { type: 'montado', count: 1 }],
-  [{ type: 'estandar', count: 2 }, { type: 'montado', count: 1 }, { type: 'agua', count: 1 }],
-  [{ type: 'agua', count: 1 }, { type: 'montado', count: 3 }]
+  [{ type: 'estandar', count: 3 }, { type: 'especial', count: 1 }],
+  [{ type: 'estandar', count: 2 }, { type: 'especial', count: 1 }, { type: 'agua', count: 1 }],
+  [{ type: 'agua', count: 1 }, { type: 'especial', count: 3 }]
 ]
 
 /**
@@ -23,7 +23,7 @@ const SQUAD_COMPOSITIONS = [
  */
 export function getEnabledTypes (totalTime) {
   const types = new Set(['estandar'])
-  if (totalTime >= 120) types.add('montado')
+  if (totalTime >= 120) types.add('especial')
   if (totalTime >= 240) types.add('agua')
   if (totalTime >= 360) types.add('gas')
   return types
@@ -43,6 +43,7 @@ export default class SpawnSystem {
     this.intervalMs = this.intervalSequence[0]
     this._timeSinceLastSpawn = 0
     this._firstSpawnDone = false
+    this._capWarned = false
   }
 
   /**
@@ -59,7 +60,14 @@ export default class SpawnSystem {
     const activeEnemies = this.scene.enemyGroup
       ? this.scene.enemyGroup.getChildren().filter(e => e.active).length
       : 0
-    if (activeEnemies >= 30) return
+    if (activeEnemies >= 30) {
+      if (!this._capWarned) {
+        console.log(`[SpawnSystem] Enemy cap reached (${activeEnemies}/30), pausing spawns`)
+        this._capWarned = true
+      }
+      return
+    }
+    this._capWarned = false
 
     this._timeSinceLastSpawn += delta
 
@@ -90,7 +98,7 @@ export default class SpawnSystem {
 
     const ENEMY_CLASSES = {
       estandar: PoliciaEstandar,
-      montado: PoliciaMontado,
+      especial: PoliciaEspecial,
       agua: CamionLanzaAgua,
       gas: CamionLanzaGas
     }
@@ -111,6 +119,7 @@ export default class SpawnSystem {
             }
           }
         }
+        console.log(`[SpawnSystem] Spawned foot squad at (${Math.round(footPoint.x)}, ${Math.round(footPoint.y)}): ${footUnits.map(u => `${u.count}×${u.type}`).join(', ')}`)
       }
     }
 
@@ -130,6 +139,7 @@ export default class SpawnSystem {
             }
           }
         }
+        console.log(`[SpawnSystem] Spawned vehicle squad at (${Math.round(vehiclePoint.x)}, ${Math.round(vehiclePoint.y)}): ${vehicleUnits.map(u => `${u.count}×${u.type}`).join(', ')}`)
       }
     }
   }
