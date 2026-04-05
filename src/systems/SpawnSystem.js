@@ -15,7 +15,9 @@ const SQUAD_COMPOSITIONS = [
   [{ type: 'estandar', count: 4 }],
   [{ type: 'estandar', count: 3 }, { type: 'especial', count: 1 }],
   [{ type: 'estandar', count: 2 }, { type: 'especial', count: 1 }, { type: 'agua', count: 1 }],
-  [{ type: 'agua', count: 1 }, { type: 'especial', count: 3 }]
+  [{ type: 'agua', count: 1 }, { type: 'especial', count: 3 }],
+  [{ type: 'estandar', count: 2 }, { type: 'gas', count: 1 }],
+  [{ type: 'especial', count: 2 }, { type: 'agua', count: 1 }, { type: 'gas', count: 1 }]
 ]
 
 /**
@@ -107,6 +109,10 @@ export default class SpawnSystem {
     if (footUnits.length > 0) {
       const footPoint = this.selectSpawnPoint(mapKey, playerPos, MIN_SPAWN_DISTANCE)
       if (footPoint) {
+        // Assign tactical roles to the squad
+        const roles = this._assignRoles(footUnits)
+        let roleIdx = 0
+
         for (const entry of footUnits) {
           const EnemyClass = ENEMY_CLASSES[entry.type]
           if (!EnemyClass) continue
@@ -114,6 +120,8 @@ export default class SpawnSystem {
             const offsetX = (Math.random() - 0.5) * 60
             const offsetY = (Math.random() - 0.5) * 60
             const enemy = new EnemyClass(this.scene, footPoint.x + offsetX, footPoint.y + offsetY)
+            enemy._role = roles[roleIdx % roles.length]
+            roleIdx++
             if (this.scene.enemyGroup) {
               this.scene.enemyGroup.add(enemy)
             }
@@ -225,6 +233,28 @@ export default class SpawnSystem {
       this.difficultyLevel++
       this.intervalMs = this.intervalSequence[this.difficultyLevel]
     }
+  }
+
+  /**
+   * Assign tactical roles to a squad.
+   * Roles: chaser (direct pursuit), flanker (approach from side),
+   * blocker (cut off escape route to exit zone).
+   * @param {Array<{ type: string, count: number }>} units
+   * @returns {string[]}
+   */
+  _assignRoles (units) {
+    const total = units.reduce((sum, u) => sum + u.count, 0)
+
+    if (total <= 1) return ['chaser']
+    if (total === 2) return ['chaser', 'flanker']
+    if (total === 3) return ['chaser', 'flanker', 'blocker']
+
+    // 4+: mix of roles — at least 1 blocker, 1 flanker, rest chasers
+    const roles = ['blocker', 'flanker']
+    for (let i = 2; i < total; i++) {
+      roles.push(i % 2 === 0 ? 'chaser' : 'flanker')
+    }
+    return roles
   }
 }
 

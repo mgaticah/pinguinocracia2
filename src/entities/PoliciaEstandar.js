@@ -188,6 +188,10 @@ export default class PoliciaEstandar extends Enemy {
 
   /**
    * Chase: pursue target with pathfinding at increased speed.
+   * Behavior varies by role:
+   * - chaser: go straight to target
+   * - flanker: approach from a perpendicular angle
+   * - blocker: position between target and exit zone
    */
   _doChase (delta) {
     // Speed depends on aggro state
@@ -199,10 +203,60 @@ export default class PoliciaEstandar extends Enemy {
     this._pathTimer += delta
     if (this._pathTimer >= 500) {
       this._pathTimer = 0
+
+      // Override target position based on role
+      const roleTarget = this._getRoleTarget()
+      if (roleTarget) {
+        this._roleTargetPos = roleTarget
+      }
+
       this._requestPath()
     }
 
     this._moveTowardTarget()
+  }
+
+  /**
+   * Calculate a modified target position based on tactical role.
+   * @returns {{ x: number, y: number }|null}
+   */
+  _getRoleTarget () {
+    if (!this.target) return null
+
+    const tx = this.target.x
+    const ty = this.target.y
+
+    if (this._role === 'flanker') {
+      // Approach from a perpendicular direction
+      const dx = tx - this.x
+      const dy = ty - this.y
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1
+      // Perpendicular offset (rotate 90°): (-dy, dx) normalized × flank distance
+      const flankDist = 120
+      const side = (this.x + this.y) % 2 === 0 ? 1 : -1 // consistent side per enemy
+      return {
+        x: tx + (-dy / dist) * flankDist * side,
+        y: ty + (dx / dist) * flankDist * side
+      }
+    }
+
+    if (this._role === 'blocker') {
+      // Position between target and exit zone
+      const exitZones = this.scene?.mapManager?.getExitZones(this.scene.currentMapKey)
+      if (exitZones && exitZones.length > 0) {
+        const ez = exitZones[0]
+        const ezX = ez.x + (ez.width || 0) / 2
+        const ezY = ez.y + (ez.height || 0) / 2
+        // Midpoint between target and exit, biased toward target
+        return {
+          x: tx + (ezX - tx) * 0.35,
+          y: ty + (ezY - ty) * 0.35
+        }
+      }
+    }
+
+    // chaser: go straight to target (default)
+    return null
   }
 
   /**

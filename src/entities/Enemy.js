@@ -43,6 +43,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.enemyType = config.type ?? 'estandar'
     this.isDead = false
     this.target = null
+    this._role = 'chaser' // default role: go straight to target
 
     // Pathfinding state
     this._path = []
@@ -265,8 +266,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     const startCol = Math.floor(this.x / TILE_SIZE)
     const startRow = Math.floor(this.y / TILE_SIZE)
-    const endCol = Math.floor(this.target.x / TILE_SIZE)
-    const endRow = Math.floor(this.target.y / TILE_SIZE)
+
+    // Use role-modified target position if available, otherwise direct target
+    const goalX = this._roleTargetPos ? this._roleTargetPos.x : this.target.x
+    const goalY = this._roleTargetPos ? this._roleTargetPos.y : this.target.y
+    const endCol = Math.floor(goalX / TILE_SIZE)
+    const endRow = Math.floor(goalY / TILE_SIZE)
 
     const grid = this._getWalkableGrid()
     if (!grid || grid.length === 0) return

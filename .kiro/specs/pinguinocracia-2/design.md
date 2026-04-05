@@ -139,7 +139,7 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
 }
 ```
 
-Subclases: `PoliciaEstandar`, `PoliciaMontado`, `CamionLanzaAgua`, `CamionLanzaGas`
+Subclases: `PoliciaEstandar`, `PoliciaEspecial`, `CamionLanzaAgua`, `CamionLanzaGas`
 
 ### Ally (clase base)
 
@@ -216,7 +216,7 @@ class FormationSystem {
 ```js
 class ScoreSystem {
   score         // number
-  pointsTable   // { policiaEstandar:10, policiaMontado:20, camionAgua:50, camionGas:40 }
+  pointsTable   // { policiaEstandar:10, policiaEspecial:20, camionAgua:50, camionGas:40 }
 
   addKill(enemyType)
   addAllyBonus(allyCount)

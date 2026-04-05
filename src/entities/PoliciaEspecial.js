@@ -17,6 +17,7 @@ export default class PoliciaEspecial extends Enemy {
       attackCooldown: 1200,
       type: 'especial'
     })
+    this._role = 'flanker' // faster unit, natural flanker
   }
 
   update (delta) {

@@ -28,6 +28,7 @@ export default class CamionLanzaGas extends Enemy {
       this.body.setOffset(24, 56)
     }
 
+    this._role = 'blocker'
     this._gasZones = []
     this._lastDirection = 'down'
   }

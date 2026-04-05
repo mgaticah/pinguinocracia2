@@ -337,7 +337,7 @@ Implementación incremental de un juego top-down 2D para navegador con Phaser 3,
 
 - [x] 19. Integrar animaciones de personajes y assets visuales
   - [x] 19.1 Registrar y configurar animaciones de spritesheets en BootScene
-    - Personajes (4×3, 48×48): player, policiaEstandar, policiaMontado, aliadoEstandar, aliadoRapido, aliadoPunk
+    - Personajes (4×3, 48×48): player, policiaEstandar, policiaEspecial, aliadoEstandar, aliadoRapido, aliadoPunk
     - Vehículos (4×2, 96×96 o 128×128): camionAgua, camionGas
     - Powerups (2 frames): manzana, maruchan, energetica, botellita
     - Efectos: efecChorro (2–3 frames), efecGas (3 frames)

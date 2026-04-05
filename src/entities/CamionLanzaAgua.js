@@ -28,6 +28,7 @@ export default class CamionLanzaAgua extends Enemy {
       this.body.setOffset(24, 56)
     }
 
+    this._role = 'blocker'
     this._chorroActive = false
     this._chorroGraphics = null
     this._facingAngle = 0
