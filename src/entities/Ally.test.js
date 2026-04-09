@@ -363,14 +363,14 @@ describe('AliadoRapido', () => {
     const a = new AliadoRapido(scene, 100, 200)
     expect(a.hp).toBe(8)
     expect(a.maxHp).toBe(8)
-    expect(a.speed).toBe(192)
+    expect(a.speed).toBe(220)
     expect(a.type).toBe('rapido')
   })
 
-  it('should have speed 1.2x base', () => {
+  it('should have high speed for evasion', () => {
     const scene = createMockScene()
     const a = new AliadoRapido(scene, 0, 0)
-    expect(a.speed).toBe(160 * 1.2)
+    expect(a.speed).toBe(220)
   })
 })
 

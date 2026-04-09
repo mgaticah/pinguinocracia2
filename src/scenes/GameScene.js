@@ -287,6 +287,13 @@ export default class GameScene extends Phaser.Scene {
 
     // --- Level start diagnostic log ---
     this._logLevelState('LEVEL START')
+
+    // --- Start explore music ---
+    this.musicSystem = this.registry?.get('musicSystem')
+    if (this.musicSystem) {
+      this.musicSystem.setScene(this)
+      this.musicSystem.play('explore')
+    }
   }
 
   update (time, delta) {
@@ -340,6 +347,11 @@ export default class GameScene extends Phaser.Scene {
     // Update final event system
     if (this.finalEventSystem) {
       this.finalEventSystem.update(delta)
+    }
+
+    // Update music state (explore ↔ combat)
+    if (this.musicSystem) {
+      this.musicSystem.updateCombatState(this)
     }
   }
 
@@ -800,6 +812,7 @@ export default class GameScene extends Phaser.Scene {
   _onGameOver () {
     // Stop all systems
     if (this.finalEventSystem) this.finalEventSystem.stop()
+    if (this.musicSystem) this.musicSystem.stop()
     this._gameOver = true
 
     // Pause physics so nothing moves

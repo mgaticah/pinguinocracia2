@@ -19,6 +19,13 @@ export default class VictoryScene extends Phaser.Scene {
     this.overlay.fillStyle(0x000000, 0.7)
     this.overlay.fillRect(0, 0, width, height)
 
+    // Play victory music
+    const music = this.registry?.get('musicSystem')
+    if (music) {
+      music.setScene(this)
+      music.play('victory')
+    }
+
     // Title: "PINGÜINOCRACIA 2"
     this.titleText = this.add.text(width / 2, height * 0.2, 'PINGÜINOCRACIA 2', {
       fontFamily: 'monospace',

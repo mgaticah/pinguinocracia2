@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import MusicSystem from '../systems/MusicSystem.js'
 
 /**
  * TitleScene — Main menu screen.
@@ -16,6 +17,16 @@ export default class TitleScene extends Phaser.Scene {
     this._drawNotebookBackground(width, height)
     this._createLogo(width, height)
     this._createMenuButtons(width, height)
+
+    // Start title music (shared instance via registry)
+    if (!this.registry?.get('musicSystem')) {
+      this.registry?.set('musicSystem', new MusicSystem(this))
+    }
+    const music = this.registry?.get('musicSystem')
+    if (music) {
+      music.setScene(this)
+      music.play('title')
+    }
   }
 
   /**

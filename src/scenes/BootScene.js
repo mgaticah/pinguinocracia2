@@ -28,6 +28,15 @@ export default class BootScene extends Phaser.Scene {
     // Splash screen / title background
     this.load.image('splashscreen', 'assets/splashscreen.png')
 
+    // --- Music tracks ---
+    this.load.audio('music_menu', 'assets/menu.mp3')
+    this.load.audio('music_combat1', 'assets/combat1.mp3')
+    this.load.audio('music_combat2', 'assets/combat2.mp3')
+    this.load.audio('music_explore1', 'assets/explore1.mp3')
+    this.load.audio('music_explore2', 'assets/explore2.mp3')
+    this.load.audio('music_victory1', 'assets/victory1.mp3')
+    this.load.audio('music_victory2', 'assets/victory2.mp3')
+
     // --- Load real spritesheets (if the file exists, it replaces the placeholder) ---
     // Characters: 5 cols × 4 rows, 48×48 per frame (PNG must be 240×192px)
     const characters = ['player', 'policiaEstandar', 'policiaEspecial', 'aliadoEstandar', 'aliadoRapido', 'aliadoPunk']
