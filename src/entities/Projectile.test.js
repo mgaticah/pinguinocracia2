@@ -44,11 +44,19 @@ vi.mock('phaser', () => {
 
 function createMockScene () {
   return {
-    add: { existing: vi.fn() },
+    add: {
+      existing: vi.fn(),
+      sprite: vi.fn(() => ({ setDepth: vi.fn(), setScale: vi.fn(), play: vi.fn(), destroy: vi.fn(), alpha: 1 })),
+      graphics: vi.fn(() => ({ fillStyle: vi.fn(), fillCircle: vi.fn(), setDepth: vi.fn(), destroy: vi.fn() }))
+    },
     physics: { add: { existing: vi.fn() } },
+    anims: { exists: vi.fn(() => false) },
     time: {
-      delayedCall: vi.fn()
-    }
+      delayedCall: vi.fn(),
+      addEvent: vi.fn(() => ({ remove: vi.fn() }))
+    },
+    tweens: { add: vi.fn() },
+    enemyGroup: { getChildren: vi.fn(() => []) }
   }
 }
 
@@ -109,7 +117,7 @@ describe('Projectile', () => {
       const proj = new Projectile(mockScene, 100, 200, 'piedra', 300, 200)
       expect(proj.active).toBe(true)
 
-      // Simulate the timer callback
+      // Simulate the timer callback — calls explodeAndDestroy
       const callback = mockScene.time.delayedCall.mock.calls[0][1]
       callback()
       expect(proj.active).toBe(false)
@@ -122,8 +130,57 @@ describe('Projectile', () => {
 
       const callback = mockScene.time.delayedCall.mock.calls[0][1]
       callback()
-      // destroy should not be called again since active is false
       expect(proj.destroy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('molotov fire zone', () => {
+    it('should spawn fire zone when molotov explodes', () => {
+      const proj = new Projectile(mockScene, 100, 200, 'molotov', 300, 200)
+      proj.explodeAndDestroy()
+      // Should have created a fire visual and a damage timer
+      expect(mockScene.time.addEvent).toHaveBeenCalled()
+    })
+
+    it('should NOT spawn fire zone for piedra', () => {
+      const proj = new Projectile(mockScene, 100, 200, 'piedra', 300, 200)
+      proj.explodeAndDestroy()
+      expect(mockScene.time.addEvent).not.toHaveBeenCalled()
+    })
+
+    it('should not explode twice', () => {
+      const proj = new Projectile(mockScene, 100, 200, 'molotov', 300, 200)
+      proj.explodeAndDestroy()
+      mockScene.time.addEvent.mockClear()
+      proj.explodeAndDestroy()
+      expect(mockScene.time.addEvent).not.toHaveBeenCalled()
+    })
+
+    it('should deal fire damage to enemies in radius', () => {
+      const enemy = { x: 110, y: 210, active: true, isDead: false, takeDamage: vi.fn() }
+      mockScene.enemyGroup.getChildren = vi.fn(() => [enemy])
+
+      const proj = new Projectile(mockScene, 100, 200, 'molotov', 100, 200)
+      proj.explodeAndDestroy()
+
+      // Get the tick callback from addEvent
+      const tickConfig = mockScene.time.addEvent.mock.calls[0][0]
+      tickConfig.callback()
+
+      expect(enemy.takeDamage).toHaveBeenCalledWith(2, 100, 200)
+    })
+
+    it('should not damage enemies outside fire radius', () => {
+      const farEnemy = { x: 500, y: 500, active: true, isDead: false, takeDamage: vi.fn() }
+      mockScene.enemyGroup.getChildren = vi.fn(() => [farEnemy])
+
+      const proj = new Projectile(mockScene, 100, 200, 'molotov', 100, 200)
+      proj.explodeAndDestroy()
+
+      const tickConfig = mockScene.time.addEvent.mock.calls[0][0]
+      tickConfig.callback()
+
+      expect(farEnemy.takeDamage).not.toHaveBeenCalled()
     })
   })
 })

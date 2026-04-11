@@ -1,4 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+// Mock localStorage
+const mockStore = {}
+const mockLocalStorage = {
+  getItem: vi.fn((key) => mockStore[key] ?? null),
+  setItem: vi.fn((key, value) => { mockStore[key] = value }),
+  removeItem: vi.fn((key) => { delete mockStore[key] })
+}
+Object.defineProperty(globalThis, 'localStorage', { value: mockLocalStorage, writable: true, configurable: true })
 
 // Lightweight Phaser mock for Node environment
 vi.mock('phaser', () => {
@@ -111,13 +120,16 @@ describe('TitleScene', () => {
     expect(scene.scene.start).toHaveBeenCalledWith('GameScene')
   })
 
-  it('"Cargar partida" button should log placeholder', () => {
+  it('"Cargar partida" button should show no-save message when empty', () => {
     scene.create()
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    // Track text calls
+    const textCalls = []
+    const origText = scene.add.text
+    scene.add.text = vi.fn((...args) => origText(...args))
     const btn = scene.menuButtons.find(b => b.label === 'Cargar partida')
     btn.hitZone._handlers.pointerdown[0]()
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('Cargar partida'))
-    spy.mockRestore()
+    const noSaveCall = scene.add.text.mock.calls.find(c => c[2] === 'No hay partida guardada')
+    expect(noSaveCall).toBeDefined()
   })
 
   it('"Opciones" button should log placeholder', () => {

@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import MusicSystem from '../systems/MusicSystem.js'
+import SaveSystem from '../systems/SaveSystem.js'
 
 /**
  * TitleScene — Main menu screen.
@@ -26,6 +27,28 @@ export default class TitleScene extends Phaser.Scene {
     if (music) {
       music.setScene(this)
       music.play('title')
+    }
+
+    // Audio unlock hint — browsers block audio until first interaction
+    const hint = this.add?.text(width / 2, height * 0.88, 'Haz clic para activar el audio', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#aaaaaa',
+      stroke: '#000000',
+      strokeThickness: 2
+    })?.setOrigin(0.5)
+
+    // On first click anywhere: unlock audio and hide hint
+    if (this.input?.once) {
+      this.input.once('pointerdown', () => {
+        if (music) {
+          if (!music._currentSound?.isPlaying) {
+            music._currentTrack = null
+            music.play('title')
+          }
+        }
+        if (hint?.destroy) hint.destroy()
+      })
     }
   }
 
@@ -165,9 +188,33 @@ export default class TitleScene extends Phaser.Scene {
       case 'Jugar':
         this.scene.start('GameScene')
         break
-      case 'Cargar partida':
-        console.log('[TitleScene] Cargar partida — mostrando slots (placeholder)')
+      case 'Cargar partida': {
+        const save = new SaveSystem()
+        if (save.hasSave()) {
+          // Start GameScene, then restore state after it creates
+          this.scene.start('GameScene')
+          // Use a short delay to let GameScene.create() finish
+          this.time?.delayedCall(100, () => {
+            const gameScene = this.scene.get('GameScene')
+            if (gameScene) {
+              const state = save.load()
+              if (state) {
+                save.restoreGameState(gameScene, state)
+              }
+            }
+          })
+        } else {
+          // No save — show message
+          const msg = this.add?.text(this.scale.width / 2, this.scale.height * 0.45, 'No hay partida guardada', {
+            fontFamily: 'monospace', fontSize: '20px', color: '#ff6666',
+            stroke: '#000000', strokeThickness: 2
+          })?.setOrigin(0.5)
+          if (msg && this.time) {
+            this.time.delayedCall(2000, () => { if (msg?.destroy) msg.destroy() })
+          }
+        }
         break
+      }
       case 'Opciones':
         console.log('[TitleScene] Opciones — placeholder')
         break

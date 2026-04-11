@@ -21,13 +21,35 @@ const SQUAD_COMPOSITIONS = [
 ]
 
 /**
- * Returns the set of enemy types enabled at a given totalTime (seconds).
+ * Map key → level index for progressive enemy unlocking.
  */
-export function getEnabledTypes (totalTime) {
+const MAP_LEVEL_INDEX = {
+  map_level1: 0,
+  map_level2: 1,
+  map_amunategui: 2,
+  map_lastarria: 3,
+  map_plaza_italia: 4
+}
+
+/**
+ * Returns the set of enemy types enabled for a given map and totalTime.
+ * Level 1: solo osos (estandar)
+ * Level 2: osos + siberianos (especial)
+ * Level 3+: osos + siberianos + orcas (agua)
+ * Level 4+: todos + morsas (gas)
+ * Tiempo también desbloquea tipos dentro del nivel (30s especial, 60s agua, 90s gas)
+ * @param {number} totalTime - seconds elapsed
+ * @param {string} [mapKey] - current map key
+ */
+export function getEnabledTypes (totalTime, mapKey) {
+  const level = MAP_LEVEL_INDEX[mapKey] ?? 0
   const types = new Set(['estandar'])
-  if (totalTime >= 120) types.add('especial')
-  if (totalTime >= 240) types.add('agua')
-  if (totalTime >= 360) types.add('gas')
+
+  // By level: unlock progressively
+  if (level >= 1 || totalTime >= 30) types.add('especial')
+  if (level >= 2 || totalTime >= 60) types.add('agua')
+  if (level >= 3 || totalTime >= 90) types.add('gas')
+
   return types
 }
 
@@ -92,7 +114,7 @@ export default class SpawnSystem {
    */
   spawnSquad (mapKey, playerPos) {
     const totalTime = this.scene.totalTime || 0
-    const composition = this.getSquadComposition(this.difficultyLevel, totalTime)
+    const composition = this.getSquadComposition(this.difficultyLevel, totalTime, mapKey)
 
     const VEHICLE_TYPES = new Set(['agua', 'gas'])
     const footUnits = composition.filter(e => !VEHICLE_TYPES.has(e.type))
@@ -159,8 +181,8 @@ export default class SpawnSystem {
    * @param {number} totalTime - seconds
    * @returns {Array<{ type: string, count: number }>}
    */
-  getSquadComposition (difficultyLevel, totalTime) {
-    const enabled = getEnabledTypes(totalTime)
+  getSquadComposition (difficultyLevel, totalTime, mapKey) {
+    const enabled = getEnabledTypes(totalTime, mapKey)
 
     // Filter compositions to those whose types are all enabled
     const valid = SQUAD_COMPOSITIONS.filter(comp =>

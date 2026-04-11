@@ -15,6 +15,9 @@ export default class BootScene extends Phaser.Scene {
       console.error(`[BootScene] Failed to load asset: ${file.key} (${file.url})`)
     })
 
+    // --- Loading screen ---
+    this._createLoadingBar()
+
     // --- Load map backgrounds and collision grids ---
     this.load.image('map_level1_bg', 'assets/level1.png')
     this.load.json('map_level1_grid', 'assets/collision_level1.json')
@@ -63,6 +66,75 @@ export default class BootScene extends Phaser.Scene {
     // Effects
     this.load.spritesheet('efecChorro', 'assets/efecChorro.png', { frameWidth: 48, frameHeight: 24 })
     this.load.spritesheet('efecGas', 'assets/efecGas.png', { frameWidth: 48, frameHeight: 48 })
+    this.load.spritesheet('efecFuego', 'assets/efecFuego.png', { frameWidth: 48, frameHeight: 48 })
+    this.load.spritesheet('efecAlerta', 'assets/efecAlerta.png', { frameWidth: 32, frameHeight: 32 })
+  }
+
+  /**
+   * Create a loading bar that updates as assets load.
+   */
+  _createLoadingBar () {
+    if (!this.cameras?.main || !this.add?.graphics) return
+
+    const { width, height } = this.cameras.main
+
+    // Background
+    const bg = this.add.graphics()
+    bg.fillStyle(0x1a1a2e, 1)
+    bg.fillRect(0, 0, width, height)
+
+    // Title text
+    const title = this.add.text(width / 2, height * 0.35, 'PINGÜINOCRACIA 2', {
+      fontFamily: 'Georgia, serif',
+      fontSize: '48px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5)
+
+    // "Cargando..." text
+    const loadText = this.add.text(width / 2, height * 0.5, 'Cargando...', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#aaaaaa'
+    }).setOrigin(0.5)
+
+    // Progress bar outline
+    const barWidth = 400
+    const barHeight = 30
+    const barX = (width - barWidth) / 2
+    const barY = height * 0.58
+
+    const barBg = this.add.graphics()
+    barBg.lineStyle(2, 0xffffff, 0.8)
+    barBg.strokeRect(barX, barY, barWidth, barHeight)
+
+    // Progress bar fill
+    const barFill = this.add.graphics()
+
+    // Percentage text
+    const pctText = this.add.text(width / 2, barY + barHeight + 20, '0%', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#ffffff'
+    }).setOrigin(0.5)
+
+    // Update on progress
+    this.load.on('progress', (value) => {
+      barFill.clear()
+      barFill.fillStyle(0x4488ff, 1)
+      barFill.fillRect(barX + 2, barY + 2, (barWidth - 4) * value, barHeight - 4)
+      pctText.setText(`${Math.round(value * 100)}%`)
+    })
+
+    // Clean up on complete
+    this.load.on('complete', () => {
+      bg.destroy()
+      title.destroy()
+      loadText.destroy()
+      barBg.destroy()
+      barFill.destroy()
+      pctText.destroy()
+    })
   }
 
   create () {
@@ -153,9 +225,11 @@ export default class BootScene extends Phaser.Scene {
       this._generateSpritesheetTexture(p.key, 32, 32, 2, 1, p.color, p.label)
     }
 
-    // Effects
-    this._generateSpritesheetTexture('efecChorro', 48, 24, 3, 1, 0x66ccff, '')
+    // Effects — chorro is 3×4 (directional), gas and fuego are 3×1
+    this._generateSpritesheetTexture('efecChorro', 48, 24, 3, 4, 0x66ccff, '')
     this._generateSpritesheetTexture('efecGas', 48, 48, 3, 1, 0xcccc33, '')
+    this._generateSpritesheetTexture('efecFuego', 48, 48, 3, 1, 0xff6600, '')
+    this._generateSpritesheetTexture('efecAlerta', 32, 32, 2, 1, 0xff0000, '!')
 
     // Projectiles (single-frame)
     this._generateTexture('piedra', 16, 16, 0xaaaaaa, '')
@@ -239,9 +313,17 @@ export default class BootScene extends Phaser.Scene {
       this.anims.create({ key: `powerup_${type}`, frames: this.anims.generateFrameNumbers(type, { frames: [0, 1] }), frameRate: 2, repeat: -1 })
     }
 
-    // Effect animations
-    this.anims.create({ key: 'efecChorro', frames: this.anims.generateFrameNumbers('efecChorro', { start: 0, end: 2 }), frameRate: 6, repeat: -1 })
+    // Effect animations — chorro directional (3 cols × 4 rows: up, down, left, right)
+    this.anims.create({ key: 'efecChorro_up', frames: this.anims.generateFrameNumbers('efecChorro', { frames: [0, 1, 2] }), frameRate: 6, repeat: -1 })
+    this.anims.create({ key: 'efecChorro_down', frames: this.anims.generateFrameNumbers('efecChorro', { frames: [3, 4, 5] }), frameRate: 6, repeat: -1 })
+    this.anims.create({ key: 'efecChorro_left', frames: this.anims.generateFrameNumbers('efecChorro', { frames: [6, 7, 8] }), frameRate: 6, repeat: -1 })
+    this.anims.create({ key: 'efecChorro_right', frames: this.anims.generateFrameNumbers('efecChorro', { frames: [9, 10, 11] }), frameRate: 6, repeat: -1 })
+    // Backward compat alias
+    this.anims.create({ key: 'efecChorro', frames: this.anims.generateFrameNumbers('efecChorro', { frames: [9, 10, 11] }), frameRate: 6, repeat: -1 })
+    // Gas and fire — omnidirectional
     this.anims.create({ key: 'efecGas', frames: this.anims.generateFrameNumbers('efecGas', { start: 0, end: 2 }), frameRate: 4, repeat: -1 })
+    this.anims.create({ key: 'efecFuego', frames: this.anims.generateFrameNumbers('efecFuego', { start: 0, end: 2 }), frameRate: 6, repeat: -1 })
+    this.anims.create({ key: 'efecAlerta', frames: this.anims.generateFrameNumbers('efecAlerta', { frames: [0, 1] }), frameRate: 4, repeat: 3 })
   }
 
   /**

@@ -155,11 +155,18 @@ export default class GameScene extends Phaser.Scene {
     this.effectSystem = new EffectSystem()
 
     // --- Score system ---
+    if (this.scoreSystem?.destroy) this.scoreSystem.destroy()
     this.scoreSystem = new ScoreSystem()
 
     // Launch HUD overlay scene (stop first in case of restart)
     this.scene.stop('HUDScene')
     this.scene.launch('HUDScene')
+
+    // Sync initial state to HUD
+    EventBus.emit('player:healed', { amount: 0, hp: this.player.hp })
+    EventBus.emit('score:changed', { score: 0, delta: 0 })
+    EventBus.emit('molotov:changed', { count: 0 })
+    EventBus.emit('weapon:changed', { weapon: 'piedra' })
 
     // --- Final Event System (only active in Plaza Italia) ---
     this.finalEventSystem = new FinalEventSystem(this)
@@ -168,10 +175,25 @@ export default class GameScene extends Phaser.Scene {
     this.saveSystem = new SaveSystem()
 
     // --- Sound system (procedural Web Audio) ---
+    if (this.soundSystem?.destroy) this.soundSystem.destroy()
     this.soundSystem = new SoundSystem(this)
 
     // --- Touch controls (mobile joystick + attack button) ---
     this.touchControls = new TouchControls(this)
+
+    // On mobile: shrink camera viewport to top 65%, controls go in bottom 35%
+    if (this.touchControls?.isEnabled) {
+      const screenH = this.scale.height
+      const viewH = Math.floor(screenH * 0.65)
+      this.cameras.main.setViewport(0, 0, this.scale.width, viewH)
+
+      // Dark background for controls area
+      this._controlsBg = this.add.graphics()
+      this._controlsBg.setScrollFactor(0)
+      this._controlsBg.setDepth(199)
+      this._controlsBg.fillStyle(0x111111, 0.9)
+      this._controlsBg.fillRect(0, viewH, this.scale.width, screenH - viewH)
+    }
 
     // Q key toggles weapon
     this.input.keyboard.on('keydown-Q', () => {
@@ -349,9 +371,13 @@ export default class GameScene extends Phaser.Scene {
       this.finalEventSystem.update(delta)
     }
 
-    // Update music state (explore ↔ combat)
+    // Update music state (explore ↔ combat) and show alert on transition
     if (this.musicSystem) {
+      const prevTrack = this.musicSystem._currentTrack
       this.musicSystem.updateCombatState(this)
+      if (prevTrack === 'explore' && this.musicSystem._currentTrack === 'combat') {
+        this._showCombatAlerts()
+      }
     }
   }
 
@@ -365,7 +391,11 @@ export default class GameScene extends Phaser.Scene {
       enemy.takeDamage(projectile.damage, projectile.x, projectile.y)
     }
     if (this.soundSystem) this.soundSystem.playHit()
-    projectile.destroy()
+    if (projectile.explodeAndDestroy) {
+      projectile.explodeAndDestroy()
+    } else {
+      projectile.destroy()
+    }
   }
 
   /**
@@ -877,6 +907,79 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Show exclamation alert sprites above all characters entering combat.
+   * Appears above player, nearby allies, and nearby enemies.
+   */
+  _showCombatAlerts () {
+    const ALERT_RANGE = 720 // same as COMBAT_CHECK_RANGE
+    const entities = []
+
+    // Player
+    if (this.player?.isAlive) entities.push(this.player)
+
+    // Nearby allies
+    if (this.allyGroup?.getChildren) {
+      for (const a of this.allyGroup.getChildren()) {
+        if (!a.active || a.isDead) continue
+        const dx = a.x - this.player.x
+        const dy = a.y - this.player.y
+        if (dx * dx + dy * dy <= ALERT_RANGE * ALERT_RANGE) {
+          entities.push(a)
+        }
+      }
+    }
+
+    // Nearby enemies
+    if (this.enemyGroup?.getChildren) {
+      for (const e of this.enemyGroup.getChildren()) {
+        if (!e.active || e.isDead) continue
+        const dx = e.x - this.player.x
+        const dy = e.y - this.player.y
+        if (dx * dx + dy * dy <= ALERT_RANGE * ALERT_RANGE) {
+          entities.push(e)
+        }
+      }
+    }
+
+    for (const entity of entities) {
+      this._spawnAlertSprite(entity)
+    }
+  }
+
+  /**
+   * Spawn a "!" alert sprite above an entity, auto-destroys after 1 second.
+   * @param {object} entity - sprite with x, y
+   */
+  _spawnAlertSprite (entity) {
+    if (!this.add) return
+
+    try {
+      const alert = this.add.sprite(entity.x, entity.y - 50, 'efecAlerta')
+      if (!alert) return
+      alert.setDepth(10)
+
+      if (this.anims?.exists('efecAlerta')) {
+        alert.play('efecAlerta')
+      }
+
+      // Float up slightly and fade out
+      if (this.tweens) {
+        this.tweens.add({
+          targets: alert,
+          y: entity.y - 70,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => { if (alert?.destroy) alert.destroy() }
+        })
+      } else if (this.time) {
+        this.time.delayedCall(1000, () => { if (alert?.destroy) alert.destroy() })
+      }
+    } catch (_) {
+      // Silently ignore if sprite creation fails
+    }
+  }
+
+  /**
    * Log a comprehensive diagnostic snapshot of the current level state.
    * @param {string} label - Context label (e.g. 'LEVEL START', 'POST-TRANSITION')
    */
@@ -913,5 +1016,24 @@ export default class GameScene extends Phaser.Scene {
     EventBus.off('zoom:request', this._onZoomRequestBound)
     if (this.soundSystem) this.soundSystem.destroy()
     if (this.scoreSystem) this.scoreSystem.destroy()
+    if (this.musicSystem) this.musicSystem.stop()
+    if (this.touchControls?.destroy) this.touchControls.destroy()
+    if (this.finalEventSystem?.stop) this.finalEventSystem.stop()
+
+    // Remove obstacle colliders
+    if (this._obstacleColliders && this.physics?.world?.removeCollider) {
+      for (const c of this._obstacleColliders) {
+        this.physics.world.removeCollider(c)
+      }
+    }
+    this._obstacleColliders = []
+
+    // Clean up exit zones
+    if (this._exitZones) {
+      for (const z of this._exitZones) {
+        if (z?.destroy) z.destroy()
+      }
+      this._exitZones = []
+    }
   }
 }

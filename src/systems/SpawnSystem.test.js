@@ -64,6 +64,10 @@ function createMockScene (overrides = {}) {
         { x: 3744, y: 2064 },
         { x: 96, y: 2064 }
       ]),
+      getVehicleSpawnPoints: vi.fn(() => [
+        { x: 96, y: 96 },
+        { x: 3744, y: 2064 }
+      ]),
       getWalkableGrid: vi.fn(() => [])
     },
     add: { existing: vi.fn() },
@@ -155,38 +159,42 @@ describe('SpawnSystem', () => {
   // -----------------------------------------------------------------------
 
   describe('getEnabledTypes()', () => {
-    it('should only enable estandar before 120s', () => {
-      const types = getEnabledTypes(60)
+    it('should only enable estandar on level 1 at start', () => {
+      const types = getEnabledTypes(0, 'map_level1')
       expect(types).toEqual(new Set(['estandar']))
     })
 
-    it('should enable especial at 120s', () => {
-      const types = getEnabledTypes(120)
+    it('should enable especial on level 2', () => {
+      const types = getEnabledTypes(0, 'map_level2')
       expect(types.has('especial')).toBe(true)
       expect(types.has('estandar')).toBe(true)
     })
 
-    it('should enable agua at 240s', () => {
-      const types = getEnabledTypes(240)
+    it('should enable agua on level 3 (amunategui)', () => {
+      const types = getEnabledTypes(0, 'map_amunategui')
       expect(types.has('agua')).toBe(true)
     })
 
-    it('should enable gas at 360s', () => {
-      const types = getEnabledTypes(360)
+    it('should enable gas on level 4 (lastarria)', () => {
+      const types = getEnabledTypes(0, 'map_lastarria')
       expect(types.has('gas')).toBe(true)
       expect(types.size).toBe(4)
     })
 
-    it('should not enable especial before 120s', () => {
-      expect(getEnabledTypes(119).has('especial')).toBe(false)
+    it('should enable especial by time (30s) even on level 1', () => {
+      expect(getEnabledTypes(30, 'map_level1').has('especial')).toBe(true)
     })
 
-    it('should not enable agua before 240s', () => {
-      expect(getEnabledTypes(239).has('agua')).toBe(false)
+    it('should enable agua by time (60s) even on level 1', () => {
+      expect(getEnabledTypes(60, 'map_level1').has('agua')).toBe(true)
     })
 
-    it('should not enable gas before 360s', () => {
-      expect(getEnabledTypes(359).has('gas')).toBe(false)
+    it('should enable gas by time (90s) even on level 1', () => {
+      expect(getEnabledTypes(90, 'map_level1').has('gas')).toBe(true)
+    })
+
+    it('should not enable especial before 30s on level 1', () => {
+      expect(getEnabledTypes(29, 'map_level1').has('especial')).toBe(false)
     })
   })
 
@@ -195,26 +203,25 @@ describe('SpawnSystem', () => {
   // -----------------------------------------------------------------------
 
   describe('getSquadComposition()', () => {
-    it('should only return estandar squads before 120s', () => {
-      const comp = spawn.getSquadComposition(0, 60)
+    it('should only return estandar squads on level 1 at start', () => {
+      const comp = spawn.getSquadComposition(0, 0, 'map_level1')
       for (const entry of comp) {
         expect(entry.type).toBe('estandar')
       }
     })
 
-    it('should allow especial in squads at 120s', () => {
-      // Run multiple times to check all returned types are valid
+    it('should allow especial in squads on level 2', () => {
       for (let i = 0; i < 20; i++) {
-        const comp = spawn.getSquadComposition(1, 120)
+        const comp = spawn.getSquadComposition(1, 0, 'map_level2')
         for (const entry of comp) {
           expect(['estandar', 'especial']).toContain(entry.type)
         }
       }
     })
 
-    it('should allow agua in squads at 240s', () => {
+    it('should allow agua in squads on level 3', () => {
       for (let i = 0; i < 20; i++) {
-        const comp = spawn.getSquadComposition(2, 240)
+        const comp = spawn.getSquadComposition(2, 0, 'map_amunategui')
         for (const entry of comp) {
           expect(['estandar', 'especial', 'agua']).toContain(entry.type)
         }
@@ -222,7 +229,7 @@ describe('SpawnSystem', () => {
     })
 
     it('should return a valid composition from SQUAD_COMPOSITIONS', () => {
-      const comp = spawn.getSquadComposition(0, 400)
+      const comp = spawn.getSquadComposition(0, 0, 'map_plaza_italia')
       const match = SQUAD_COMPOSITIONS.some(sc =>
         JSON.stringify(sc) === JSON.stringify(comp)
       )

@@ -252,9 +252,10 @@ describe('BootScene', () => {
     it('should register the correct total number of animations', () => {
       // 6 characters × 12 anims (4 walk + 4 idle + 4 attack) = 72
       // 2 vehicles × 16 anims (4 walk + 4 idle + 4 move + 4 attack) = 32
-      // But move aliases share frames with walk, creating 4 extra keys per vehicle
-      // Unique: 72 + 32 + 4 + 2 = 110
-      expect(scene._anims.size).toBe(110)
+      // 4 powerups = 4
+      // Effects: 4 chorro directional + 1 chorro compat + 1 gas + 1 fuego + 1 alerta = 8
+      // Total: 72 + 32 + 4 + 8 = 116
+      expect(scene._anims.size).toBe(116)
     })
   })
 

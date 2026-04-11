@@ -376,17 +376,16 @@ export default class MapManager {
   _cleanupPreviousMap (scene) {
     if (!scene) return
 
-    // Destroy map visual container (bg, ground, labels — everything)
+    // Destroy map visual container (bg, ground, labels, obstacle rects)
     if (this._mapContainer) {
       this._mapContainer.destroy(true)
       this._mapContainer = null
     }
 
-    // Also destroy any leftover background images by key
+    // Destroy any leftover objects at low depth (map visuals)
     if (scene.children) {
       const toRemove = []
       scene.children.each(child => {
-        // Remove old background images and graphics at depth <= -7
         if (child && child.depth !== undefined && child.depth <= -7) {
           toRemove.push(child)
         }
@@ -396,8 +395,14 @@ export default class MapManager {
       }
     }
 
-    // Destroy obstacle physics group
+    // Destroy obstacle physics group and all its children
     if (this._obstacleGroup) {
+      // Destroy each child explicitly (some may not be in the container)
+      if (this._obstacleGroup.getChildren) {
+        for (const child of this._obstacleGroup.getChildren()) {
+          if (child?.destroy) child.destroy()
+        }
+      }
       this._obstacleGroup.clear(true, true)
       this._obstacleGroup = null
     }
@@ -405,7 +410,7 @@ export default class MapManager {
     // Destroy exit zone bodies
     if (this._exitZoneBodies) {
       for (const z of this._exitZoneBodies) {
-        if (z && z.destroy) z.destroy()
+        if (z?.destroy) z.destroy()
       }
       this._exitZoneBodies = []
     }
@@ -505,6 +510,7 @@ export default class MapManager {
         } else {
           const rect = scene.add.rectangle(obs.x + obs.width / 2, obs.y + obs.height / 2, obs.width, obs.height, 0xb0c4de, 0.6)
           this._obstacleGroup.add(rect)
+          this._mapContainer.add(rect)
           rect.body.setSize(obs.width, obs.height)
           rect.body.setOffset(-obs.width / 2, -obs.height / 2)
         }

@@ -160,33 +160,41 @@ export default class CamionLanzaAgua extends Enemy {
   }
 
   /**
-   * Show a visual effect for the water cannon.
+   * Show a directional water jet sprite effect.
    */
   _showChorroEffect () {
     if (!this.scene || !this.scene.add) return
 
-    const endX = this.x + Math.cos(this._facingAngle) * ATTACK_RANGE
-    const endY = this.y + Math.sin(this._facingAngle) * ATTACK_RANGE
+    const dir = this._lastDirection || 'right'
+    const animKey = `efecChorro_${dir}`
 
-    const graphics = this.scene.add.graphics()
-    graphics.lineStyle(6, 0x4488ff, 0.6)
-    graphics.beginPath()
-    graphics.moveTo(this.x, this.y)
-    graphics.lineTo(endX, endY)
-    graphics.strokePath()
-    graphics.setDepth(5)
+    // Offset the effect in the facing direction
+    const offsets = {
+      up: { x: 0, y: -80 },
+      down: { x: 0, y: 80 },
+      left: { x: -80, y: 0 },
+      right: { x: 80, y: 0 }
+    }
+    const off = offsets[dir] || offsets.right
 
+    const sprite = this.scene.add.sprite(this.x + off.x, this.y + off.y, 'efecChorro')
+    sprite.setDepth(5)
+    sprite.setScale(2)
+
+    if (this.scene.anims?.exists(animKey)) {
+      sprite.play(animKey)
+    }
+
+    // Fade out and destroy
     if (this.scene.tweens) {
       this.scene.tweens.add({
-        targets: graphics,
+        targets: sprite,
         alpha: 0,
-        duration: 400,
-        onComplete: () => graphics.destroy()
+        duration: 500,
+        onComplete: () => sprite.destroy()
       })
-    } else {
-      if (this.scene.time) {
-        this.scene.time.delayedCall(400, () => graphics.destroy())
-      }
+    } else if (this.scene.time) {
+      this.scene.time.delayedCall(500, () => sprite.destroy())
     }
   }
 }

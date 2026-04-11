@@ -23,10 +23,17 @@ export default class TouchControls {
   _getLayout () {
     const w = this.scene.scale.width
     const h = this.scene.scale.height
+    // Controls live in the bottom 35% of the screen
+    const controlsTop = Math.floor(h * 0.65)
+    const controlsH = h - controlsTop
+    const controlsMidY = controlsTop + controlsH / 2
     return {
-      joystick: { x: 120, y: h * 0.7 },
-      attack: { x: w - 100, y: h * 0.7 },
-      weapon: { x: w - 100, y: h * 0.7 - 90 },
+      joystick: { x: 120, y: controlsMidY },
+      attack: { x: w - 100, y: controlsMidY },
+      weapon: { x: w - 100, y: controlsMidY - 70 },
+      pause: { x: w - 50, y: controlsTop + 30 },
+      save: { x: w - 120, y: controlsTop + 30 },
+      controlsTop,
       zoneW: w,
       zoneH: h
     }
@@ -54,6 +61,18 @@ export default class TouchControls {
       fontSize: '20px', fontFamily: 'monospace', color: '#ffffff'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(201)
 
+    // Pause button (top-right)
+    this._pauseGfx = this.scene.add.graphics().setScrollFactor(0).setDepth(200)
+    this._pauseLabel = this.scene.add.text(0, 0, '⏸', {
+      fontSize: '28px', color: '#ffffff'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(201)
+
+    // Save button (top-right, left of pause)
+    this._saveGfx = this.scene.add.graphics().setScrollFactor(0).setDepth(200)
+    this._saveLabel = this.scene.add.text(0, 0, '💾', {
+      fontSize: '24px', color: '#ffffff'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(201)
+
     // Draw and position
     this._reposition()
 
@@ -62,6 +81,21 @@ export default class TouchControls {
 
     this.scene.input.on('pointerdown', (pointer) => {
       const lay = this._getLayout()
+
+      // Check pause button (top-right)
+      const dpause = Math.sqrt((pointer.x - lay.pause.x) ** 2 + (pointer.y - lay.pause.y) ** 2)
+      if (dpause <= 30) {
+        if (this.scene._pauseGame) this.scene._pauseGame()
+        return
+      }
+
+      // Check save button (top-right)
+      const dsave = Math.sqrt((pointer.x - lay.save.x) ** 2 + (pointer.y - lay.save.y) ** 2)
+      if (dsave <= 30) {
+        if (this.scene._quicksave) this.scene._quicksave()
+        return
+      }
+
       // Left half = joystick
       if (pointer.x < lay.zoneW / 2) {
         this._dragPointer = pointer.id
@@ -125,6 +159,22 @@ export default class TouchControls {
     this._wpnGfx.fillStyle(0x1a3a6b, 0.4)
     this._wpnGfx.fillCircle(lay.weapon.x, lay.weapon.y, 30)
     this._wpnLabel.setPosition(lay.weapon.x, lay.weapon.y)
+
+    // Redraw pause button
+    this._pauseGfx.clear()
+    this._pauseGfx.fillStyle(0x333333, 0.5)
+    this._pauseGfx.fillCircle(lay.pause.x, lay.pause.y, 25)
+    this._pauseGfx.lineStyle(2, 0xffffff, 0.4)
+    this._pauseGfx.strokeCircle(lay.pause.x, lay.pause.y, 25)
+    this._pauseLabel.setPosition(lay.pause.x, lay.pause.y)
+
+    // Redraw save button
+    this._saveGfx.clear()
+    this._saveGfx.fillStyle(0x333333, 0.5)
+    this._saveGfx.fillCircle(lay.save.x, lay.save.y, 25)
+    this._saveGfx.lineStyle(2, 0xffffff, 0.4)
+    this._saveGfx.strokeCircle(lay.save.x, lay.save.y, 25)
+    this._saveLabel.setPosition(lay.save.x, lay.save.y)
   }
 
   _updateJoystick (px, py) {
@@ -149,5 +199,11 @@ export default class TouchControls {
 
   get isEnabled () {
     return this._enabled
+  }
+
+  destroy () {
+    if (this.scene?.scale) {
+      this.scene.scale.off('resize')
+    }
   }
 }

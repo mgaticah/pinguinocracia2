@@ -1,8 +1,15 @@
 import Phaser from 'phaser'
 
+const FIRE_DURATION = 3000    // 3 seconds
+const FIRE_DAMAGE = 2         // damage per tick
+const FIRE_TICK_INTERVAL = 1000 // 1 tick per second
+const FIRE_RADIUS = 48        // 1 cuerpo
+
 /**
  * Projectile — A thrown weapon (Piedra or Molotov).
- * Travels toward a target position and auto-destroys on collision or after lifespan.
+ * Piedra: travels to target, deals damage on hit, disappears.
+ * Molotov: travels to target, explodes on hit or at max range,
+ *          leaves fire zone for 3s dealing 2 damage/second.
  */
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -22,6 +29,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
 
     this.type = type
     this.damage = type === 'molotov' ? 5 : 1
+    this._exploded = false
 
     // Store target info — velocity is applied in launch() after being added to group
     this._targetX = targetX
@@ -54,10 +62,92 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     // Auto-destroy after reaching target distance, or 2s max
     const travelTime = dist > 0 ? (dist / this._speed) * 1000 : 500
     const lifespan = Math.min(travelTime, 2000)
-    this.scene.time.delayedCall(lifespan, () => {
-      if (this.active) {
-        this.destroy()
+    if (this.scene?.time) {
+      this.scene.time.delayedCall(lifespan, () => {
+        if (this.active) {
+          this.explodeAndDestroy()
+        }
+      })
+    }
+  }
+
+  /**
+   * Explode (if molotov) and destroy the projectile.
+   * Called on enemy hit or when reaching max range.
+   */
+  explodeAndDestroy () {
+    if (this._exploded) return
+    this._exploded = true
+
+    if (this.type === 'molotov') {
+      this._spawnFireZone(this.x, this.y)
+    }
+
+    this.destroy()
+  }
+
+  /**
+   * Spawn a fire zone at the impact point.
+   * Deals FIRE_DAMAGE per second to enemies in range for FIRE_DURATION.
+   */
+  _spawnFireZone (x, y) {
+    const scene = this.scene
+    if (!scene || !scene.add) return
+
+    // Visual: fire sprite or fallback circle
+    let fireVisual
+    if (scene.anims?.exists('efecFuego')) {
+      fireVisual = scene.add.sprite(x, y, 'efecFuego')
+      fireVisual.play('efecFuego')
+      fireVisual.setScale(2)
+    } else {
+      fireVisual = scene.add.graphics()
+      fireVisual.fillStyle(0xff6600, 0.5)
+      fireVisual.fillCircle(x, y, FIRE_RADIUS)
+    }
+    fireVisual.setDepth(3)
+
+    // Damage tick — every FIRE_TICK_INTERVAL, damage enemies within radius
+    let elapsed = 0
+    const tickTimer = scene.time?.addEvent({
+      delay: FIRE_TICK_INTERVAL,
+      repeat: Math.floor(FIRE_DURATION / FIRE_TICK_INTERVAL) - 1,
+      callback: () => {
+        elapsed += FIRE_TICK_INTERVAL
+        if (!scene.enemyGroup) return
+
+        const enemies = scene.enemyGroup.getChildren()
+        for (const enemy of enemies) {
+          if (!enemy.active || enemy.isDead) continue
+          const dx = enemy.x - x
+          const dy = enemy.y - y
+          if (dx * dx + dy * dy <= FIRE_RADIUS * FIRE_RADIUS * 4) {
+            if (enemy.takeDamage) {
+              enemy.takeDamage(FIRE_DAMAGE, x, y)
+            }
+          }
+        }
       }
     })
+
+    // Clean up after duration
+    if (scene.time) {
+      scene.time.delayedCall(FIRE_DURATION, () => {
+        if (tickTimer) tickTimer.remove()
+        if (fireVisual?.destroy) fireVisual.destroy()
+      })
+    }
+
+    // Fade out the visual near the end
+    if (scene.tweens && fireVisual) {
+      scene.tweens.add({
+        targets: fireVisual,
+        alpha: 0,
+        delay: FIRE_DURATION - 500,
+        duration: 500
+      })
+    }
   }
 }
+
+export { FIRE_DURATION, FIRE_DAMAGE, FIRE_TICK_INTERVAL, FIRE_RADIUS }

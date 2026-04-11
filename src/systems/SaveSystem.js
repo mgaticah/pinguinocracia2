@@ -1,84 +1,137 @@
 import EventBus from '../EventBus.js'
 
-const SLOTS = ['slot1', 'slot2', 'slot3', 'quicksave']
-const STORAGE_PREFIX = 'pinguinocracia2_'
+const STORAGE_KEY = 'pinguinocracia2_save'
+const OBFUSCATION_KEY = 'P1ngu1n0cr4c14' // XOR key for obfuscation
 
 /**
- * SaveSystem — Manages save/load of game state to localStorage.
- * Supports 4 slots: slot1, slot2, slot3, quicksave.
+ * SaveSystem — Single-slot save/load with obfuscation.
+ * Data is XOR-encrypted + base64 encoded + checksum validated.
  */
 export default class SaveSystem {
   constructor () {
-    this.SLOTS = SLOTS
+    this.SLOTS = ['quicksave'] // single slot
   }
 
   /**
-   * Save a gameState to the given slot in localStorage.
-   * @param {string} slotId - One of SLOTS
-   * @param {object} gameState - Serializable game state
-   * @returns {boolean} true if saved successfully, false on error
+   * Save game state to localStorage (obfuscated).
+   * @param {string} _slotId - ignored, single slot
+   * @param {object} gameState
+   * @returns {boolean}
    */
-  save (slotId, gameState) {
-    if (!SLOTS.includes(slotId)) return false
-
+  save (_slotId, gameState) {
     try {
-      const data = JSON.stringify(gameState)
-      localStorage.setItem(`${STORAGE_PREFIX}${slotId}`, data)
+      const json = JSON.stringify(gameState)
+      const checksum = this._checksum(json)
+      const payload = JSON.stringify({ d: json, c: checksum })
+      const encoded = this._xorEncode(payload)
+      localStorage.setItem(STORAGE_KEY, encoded)
       return true
-    } catch (_e) {
+    } catch (_) {
       return false
     }
   }
 
   /**
-   * Load a gameState from the given slot.
-   * @param {string} slotId - One of SLOTS
-   * @returns {object|null} The parsed game state, or null if empty/corrupted
+   * Load game state from localStorage (validates checksum).
+   * @param {string} _slotId - ignored, single slot
+   * @returns {object|null}
    */
-  load (slotId) {
-    if (!SLOTS.includes(slotId)) return null
-
+  load (_slotId) {
     try {
-      const raw = localStorage.getItem(`${STORAGE_PREFIX}${slotId}`)
-      if (raw === null) return null
-      return JSON.parse(raw)
-    } catch (_e) {
-      // Corrupted JSON — mark slot as invalid by removing it
-      try {
-        localStorage.removeItem(`${STORAGE_PREFIX}${slotId}`)
-      } catch (_ignored) {}
+      const encoded = localStorage.getItem(STORAGE_KEY)
+      if (!encoded) return null
+
+      const payload = this._xorDecode(encoded)
+      const { d, c } = JSON.parse(payload)
+
+      // Validate checksum — reject tampered data
+      if (this._checksum(d) !== c) {
+        console.warn('[SaveSystem] Checksum mismatch — save data may be tampered')
+        return null
+      }
+
+      return JSON.parse(d)
+    } catch (_) {
       return null
     }
   }
 
   /**
-   * List all slots with their status.
-   * @returns {Array<{ slotId: string, date: string|null, empty: boolean }>}
+   * Check if a save exists.
+   * @returns {boolean}
+   */
+  hasSave () {
+    return localStorage.getItem(STORAGE_KEY) !== null
+  }
+
+  /**
+   * Delete the save.
+   */
+  deleteSave () {
+    localStorage.removeItem(STORAGE_KEY)
+  }
+
+  /**
+   * List slots (single slot compat).
    */
   listSlots () {
-    return SLOTS.map(slotId => {
-      const state = this.load(slotId)
-      if (state && state.savedAt) {
-        return { slotId, date: state.savedAt, empty: false }
-      }
-      return { slotId, date: null, empty: true }
-    })
+    const state = this.load()
+    return [{
+      slotId: 'quicksave',
+      date: state?.savedAt || null,
+      empty: !state
+    }]
+  }
+
+  /**
+   * XOR encode string → base64.
+   */
+  _xorEncode (str) {
+    let result = ''
+    for (let i = 0; i < str.length; i++) {
+      result += String.fromCharCode(
+        str.charCodeAt(i) ^ OBFUSCATION_KEY.charCodeAt(i % OBFUSCATION_KEY.length)
+      )
+    }
+    return btoa(unescape(encodeURIComponent(result)))
+  }
+
+  /**
+   * Base64 → XOR decode string.
+   */
+  _xorDecode (encoded) {
+    const decoded = decodeURIComponent(escape(atob(encoded)))
+    let result = ''
+    for (let i = 0; i < decoded.length; i++) {
+      result += String.fromCharCode(
+        decoded.charCodeAt(i) ^ OBFUSCATION_KEY.charCodeAt(i % OBFUSCATION_KEY.length)
+      )
+    }
+    return result
+  }
+
+  /**
+   * Simple checksum (sum of char codes mod large prime).
+   */
+  _checksum (str) {
+    let sum = 0
+    for (let i = 0; i < str.length; i++) {
+      sum = (sum * 31 + str.charCodeAt(i)) >>> 0
+    }
+    return sum.toString(36)
   }
 
   /**
    * Build a serializable GameState from the current scene.
    * @param {object} scene - The GameScene instance
-   * @returns {object} GameState
+   * @returns {object}
    */
   buildGameState (scene) {
     const player = scene.player || {}
     const allies = []
 
-    if (scene.allyGroup) {
-      const allyChildren = scene.allyGroup.getChildren
-        ? scene.allyGroup.getChildren()
-        : []
-      for (const ally of allyChildren) {
+    if (scene.allyGroup?.getChildren) {
+      for (const ally of scene.allyGroup.getChildren()) {
         if (!ally.active || ally.isDead) continue
         allies.push({
           type: ally.type || 'estandar',
@@ -88,23 +141,6 @@ export default class SaveSystem {
         })
       }
     }
-
-    // Gather active energetica effect info
-    let energeticaEffect = { active: false, remaining: 0 }
-    if (scene.effectSystem && scene.effectSystem.activeEffects) {
-      const playerEffect = scene.effectSystem.activeEffects.get(player)
-      if (playerEffect && playerEffect.type === 'energetica') {
-        energeticaEffect = { active: true, remaining: playerEffect.remaining }
-      }
-    }
-
-    // Determine active enemy types from spawn system
-    const activeEnemyTypes = []
-    const totalTime = scene.totalTime || 0
-    if (totalTime >= 60) activeEnemyTypes.push('estandar')
-    if (totalTime >= 120) activeEnemyTypes.push('especial')
-    if (totalTime >= 240) activeEnemyTypes.push('agua')
-    if (totalTime >= 360) activeEnemyTypes.push('gas')
 
     return {
       version: '1.0',
@@ -118,24 +154,17 @@ export default class SaveSystem {
       },
       allies,
       inventory: {
-        molotovs: scene.globalCounter ? scene.globalCounter.molotovs : 0
+        molotovs: scene.globalCounter?.molotovs || 0
       },
       map: {
         key: scene.currentMapKey || 'map_level1',
-        entryPoint: scene.mapManager
-          ? scene.mapManager.getEntryPoint(scene.currentMapKey) || { x: 192, y: 1080 }
-          : { x: 192, y: 1080 },
-        unlockedExits: []
+        entryPoint: scene.mapManager?.getEntryPoint(scene.currentMapKey) || { x: 192, y: 1080 }
       },
       difficulty: {
-        totalTime,
-        spawnLevel: scene.spawnSystem ? scene.spawnSystem.difficultyLevel : 0,
-        activeEnemyTypes
+        totalTime: scene.totalTime || 0,
+        spawnLevel: scene.spawnSystem?.difficultyLevel || 0
       },
-      activeEffects: {
-        energetica: energeticaEffect
-      },
-      score: scene.scoreSystem ? scene.scoreSystem.getTotal() : 0
+      score: scene.scoreSystem?.getTotal() || 0
     }
   }
 
@@ -154,9 +183,6 @@ export default class SaveSystem {
       scene.player.weapon = state.player.weapon
       if (scene.player.setPosition) {
         scene.player.setPosition(state.player.x, state.player.y)
-      } else {
-        scene.player.x = state.player.x
-        scene.player.y = state.player.y
       }
       scene.player.isAlive = state.player.hp > 0
     }
@@ -168,9 +194,9 @@ export default class SaveSystem {
     }
 
     // Restore map
-    if (state.map && state.map.key) {
+    if (state.map?.key) {
       scene.currentMapKey = state.map.key
-      if (scene.mapManager && scene.mapManager.loadMap) {
+      if (scene.mapManager?.loadMap) {
         scene.mapManager.loadMap(state.map.key, scene)
       }
     }
@@ -187,47 +213,17 @@ export default class SaveSystem {
       }
     }
 
-    // Restore effects
-    if (state.activeEffects && state.activeEffects.energetica && state.activeEffects.energetica.active) {
-      if (scene.effectSystem && scene.player) {
-        scene.effectSystem.applyEffect(scene.player, 'energetica', state.activeEffects.energetica.remaining)
-      }
-    }
-
     // Restore score
     if (scene.scoreSystem && state.score !== undefined) {
       scene.scoreSystem.score = state.score
       EventBus.emit('score:changed', { score: state.score, delta: 0 })
     }
 
-    // Restore allies
-    if (state.allies && scene.allyGroup) {
-      // Clear existing allies
-      if (scene.allyGroup.clear) {
-        scene.allyGroup.clear(true, true)
-      }
-
-      const playerX = state.player ? state.player.x : 0
-      const playerY = state.player ? state.player.y : 0
-
-      for (const allyData of state.allies) {
-        const x = playerX + (allyData.offsetX || 0)
-        const y = playerY + (allyData.offsetY || 0)
-
-        let ally = null
-        if (scene._createAllyByType) {
-          ally = scene._createAllyByType(allyData.type, x, y)
-        }
-
-        if (ally) {
-          ally.hp = allyData.hp
-          if (scene.allyGroup.add) {
-            scene.allyGroup.add(ally)
-          }
-        }
-      }
+    // Emit HP sync
+    if (scene.player) {
+      EventBus.emit('player:healed', { amount: 0, hp: scene.player.hp })
     }
   }
 }
 
-export { SLOTS, STORAGE_PREFIX }
+export { STORAGE_KEY }
