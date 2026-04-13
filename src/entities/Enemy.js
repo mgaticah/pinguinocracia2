@@ -63,6 +63,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // Set up EasyStar instance
     this._easystar = null
     this._initPathfinding()
+
+    // Stuck detection
+    this._lastPos = { x: 0, y: 0 }
+    this._stuckTimer = 0
   }
 
   /**
@@ -131,6 +135,16 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this._flashHit()
     this._knockback(fromX, fromY)
 
+    // Metal impact sound for vehicles, hit sound for foot enemies
+    if ((this.enemyType === 'agua' || this.enemyType === 'gas') && this.scene?.sound?.play) {
+      try { this.scene.sound.play('sfx_golpemetal', { volume: 0.5 }) } catch (e) {}
+    } else if (this.scene?.sound?.play) {
+      try { this.scene.sound.play('sfx_golpeenemigo', { volume: 0.4 }) } catch (e) {}
+    }
+
+    // Hit effect
+    this._spawnHitEffect()
+
     if (this.hp <= 0) {
       this.die()
     }
@@ -161,6 +175,27 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
           if (this.active && this.clearTint) this.clearTint()
         })
       }
+    }
+  }
+
+  /**
+   * Spawn a hit effect sprite that rises and fades out.
+   */
+  _spawnHitEffect () {
+    if (!this.scene?.add) return
+    const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
+    fx.setDepth(100)
+    if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
+    if (this.scene.tweens) {
+      this.scene.tweens.add({
+        targets: fx,
+        y: fx.y - 40,
+        alpha: 0,
+        duration: 600,
+        onComplete: () => fx.destroy()
+      })
+    } else {
+      this.scene.time?.delayedCall(600, () => fx.destroy())
     }
   }
 
@@ -229,6 +264,24 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this._pathTimer >= PATH_RECALC_INTERVAL) {
       this._pathTimer = 0
       this._requestPath()
+    }
+
+    // Stuck detection — if barely moved in 400ms, force path recalc and nudge
+    this._stuckTimer += delta
+    if (this._stuckTimer >= 400) {
+      const dx = this.x - this._lastPos.x
+      const dy = this.y - this._lastPos.y
+      if (dx * dx + dy * dy < 4) {
+        // Barely moved — force recalc and random nudge
+        this._pathTimer = PATH_RECALC_INTERVAL
+        this._path = []
+        const nudge = 20
+        this.x += (Math.random() - 0.5) * nudge
+        this.y += (Math.random() - 0.5) * nudge
+      }
+      this._lastPos.x = this.x
+      this._lastPos.y = this.y
+      this._stuckTimer = 0
     }
 
     // Move toward target

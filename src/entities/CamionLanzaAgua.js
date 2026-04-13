@@ -181,8 +181,14 @@ export default class CamionLanzaAgua extends Enemy {
     sprite.setDepth(5)
     sprite.setScale(2)
 
-    if (this.scene.anims?.exists(animKey)) {
-      sprite.play(animKey)
+    try {
+      if (this.scene.anims?.exists(animKey)) {
+        sprite.play(animKey)
+      } else if (this.scene.anims?.exists('efecChorro')) {
+        sprite.play('efecChorro')
+      }
+    } catch (e) {
+      // Animation frames may not exist for placeholder textures
     }
 
     // Fade out and destroy

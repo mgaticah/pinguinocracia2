@@ -40,6 +40,17 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
 
     // Launch immediately
     this.launch()
+
+    // Play spin animation
+    const spinKey = `${this.type}_spin`
+    if (scene.anims?.exists(spinKey)) {
+      this.play(spinKey)
+    }
+
+    // Play throw sound for molotov
+    if (this.type === 'molotov' && scene.sound?.play) {
+      try { scene.sound.play('sfx_lanzamolotov', { volume: 0.5 }) } catch (e) {}
+    }
   }
 
   /**
@@ -80,6 +91,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this._exploded = true
 
     if (this.type === 'molotov') {
+      // Impact sound
+      try { this.scene?.sound?.play('sfx_quiebramolotov', { volume: 0.6 }) } catch (e) {}
       this._spawnFireZone(this.x, this.y)
     }
 
@@ -106,6 +119,15 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       fireVisual.fillCircle(x, y, FIRE_RADIUS)
     }
     fireVisual.setDepth(3)
+
+    // Fire loop sound
+    let fireSound = null
+    try {
+      if (scene.sound?.add) {
+        fireSound = scene.sound.add('sfx_ardemolotov', { volume: 0.3, loop: true })
+        fireSound.play()
+      }
+    } catch (e) {}
 
     // Damage tick — every FIRE_TICK_INTERVAL, damage enemies within radius
     let elapsed = 0
@@ -135,6 +157,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       scene.time.delayedCall(FIRE_DURATION, () => {
         if (tickTimer) tickTimer.remove()
         if (fireVisual?.destroy) fireVisual.destroy()
+        if (fireSound) { fireSound.stop(); fireSound.destroy() }
       })
     }
 

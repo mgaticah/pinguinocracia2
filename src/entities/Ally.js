@@ -333,6 +333,12 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     this._flashHit()
     this._knockback(fromX, fromY)
 
+    // Hit sound
+    try { this.scene?.sound?.play('sfx_golpeplayer', { volume: 0.35 }) } catch (e) {}
+
+    // Hit effect
+    this._spawnHitEffect()
+
     if (this.hp <= 0) {
       this.die()
     }
@@ -387,6 +393,27 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
           if (this.active && this.clearTint) this.clearTint()
         })
       }
+    }
+  }
+
+  /**
+   * Spawn a hit effect sprite that rises and fades out.
+   */
+  _spawnHitEffect () {
+    if (!this.scene?.add) return
+    const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
+    fx.setDepth(100)
+    if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
+    if (this.scene.tweens) {
+      this.scene.tweens.add({
+        targets: fx,
+        y: fx.y - 40,
+        alpha: 0,
+        duration: 600,
+        onComplete: () => fx.destroy()
+      })
+    } else {
+      this.scene.time?.delayedCall(600, () => fx.destroy())
     }
   }
 

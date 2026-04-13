@@ -59,15 +59,24 @@ export default class BootScene extends Phaser.Scene {
       this.load.spritesheet(key, `assets/${key}.png`, { frameWidth: 32, frameHeight: 32 })
     }
 
-    // Projectiles: single frame 16×16
-    this.load.image('piedra', 'assets/piedra.png')
-    this.load.image('molotov', 'assets/molotov.png')
+    // Projectiles: 3 frames 16×16 (48×16 spritesheet)
+    this.load.spritesheet('piedra', 'assets/piedra.png', { frameWidth: 16, frameHeight: 16 })
+    this.load.spritesheet('molotov', 'assets/molotov.png', { frameWidth: 16, frameHeight: 16 })
+
+    // Audio
+    this.load.audio('sfx_lanzamolotov', 'assets/lanzamolotov.mp3')
+    this.load.audio('sfx_quiebramolotov', 'assets/quiebramolotov.mp3')
+    this.load.audio('sfx_ardemolotov', 'assets/ardemolotov.mp3')
+    this.load.audio('sfx_golpemetal', 'assets/golpemetal.mp3')
+    this.load.audio('sfx_golpeplayer', 'assets/golpeplayer.mp3')
+    this.load.audio('sfx_golpeenemigo', 'assets/golpeenemigo.mp3')
 
     // Effects
     this.load.spritesheet('efecChorro', 'assets/efecChorro.png', { frameWidth: 48, frameHeight: 24 })
     this.load.spritesheet('efecGas', 'assets/efecGas.png', { frameWidth: 48, frameHeight: 48 })
     this.load.spritesheet('efecFuego', 'assets/efecFuego.png', { frameWidth: 48, frameHeight: 48 })
     this.load.spritesheet('efecAlerta', 'assets/efecAlerta.png', { frameWidth: 32, frameHeight: 32 })
+    this.load.spritesheet('efecGolpe', 'assets/efecGolpe.png', { frameWidth: 32, frameHeight: 32 })
   }
 
   /**
@@ -230,10 +239,11 @@ export default class BootScene extends Phaser.Scene {
     this._generateSpritesheetTexture('efecGas', 48, 48, 3, 1, 0xcccc33, '')
     this._generateSpritesheetTexture('efecFuego', 48, 48, 3, 1, 0xff6600, '')
     this._generateSpritesheetTexture('efecAlerta', 32, 32, 2, 1, 0xff0000, '!')
+    this._generateSpritesheetTexture('efecGolpe', 32, 32, 2, 1, 0xffff00, '!')
 
-    // Projectiles (single-frame)
-    this._generateTexture('piedra', 16, 16, 0xaaaaaa, '')
-    this._generateTexture('molotov', 16, 16, 0xff6600, '')
+    // Projectiles (3-frame spritesheet, 48×16)
+    this._generateSpritesheetTexture('piedra', 16, 16, 3, 1, 0xaaaaaa, '')
+    this._generateSpritesheetTexture('molotov', 16, 16, 3, 1, 0xff6600, '')
 
     // UI elements (single-frame)
     const uiElements = [
@@ -324,6 +334,11 @@ export default class BootScene extends Phaser.Scene {
     this.anims.create({ key: 'efecGas', frames: this.anims.generateFrameNumbers('efecGas', { start: 0, end: 2 }), frameRate: 4, repeat: -1 })
     this.anims.create({ key: 'efecFuego', frames: this.anims.generateFrameNumbers('efecFuego', { start: 0, end: 2 }), frameRate: 6, repeat: -1 })
     this.anims.create({ key: 'efecAlerta', frames: this.anims.generateFrameNumbers('efecAlerta', { frames: [0, 1] }), frameRate: 4, repeat: 3 })
+    this.anims.create({ key: 'efecGolpe', frames: this.anims.generateFrameNumbers('efecGolpe', { frames: [0, 1] }), frameRate: 6, repeat: 0 })
+
+    // Projectile spin animations (3 frames each)
+    this.anims.create({ key: 'piedra_spin', frames: this.anims.generateFrameNumbers('piedra', { start: 0, end: 2 }), frameRate: 10, repeat: -1 })
+    this.anims.create({ key: 'molotov_spin', frames: this.anims.generateFrameNumbers('molotov', { start: 0, end: 2 }), frameRate: 10, repeat: -1 })
   }
 
   /**

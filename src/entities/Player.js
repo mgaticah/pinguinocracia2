@@ -156,6 +156,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this._knockback(fromX, fromY)
     EventBus.emit('player:damaged', { amount, hp: this.hp })
 
+    // Hit sound
+    try { this.scene?.sound?.play('sfx_golpeplayer', { volume: 0.4 }) } catch (e) {}
+
+    // Hit effect — exclamation rises and fades
+    this._spawnHitEffect()
+
     if (this.hp <= 0) {
       this.isAlive = false
       this.setVelocity(0, 0)
@@ -283,6 +289,27 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
     const offset = offsets[this._lastDirection] || offsets.down
     return this.shoot(this.x + offset.x, this.y + offset.y)
+  }
+
+  /**
+   * Spawn a hit effect sprite that rises and fades out.
+   */
+  _spawnHitEffect () {
+    if (!this.scene?.add) return
+    const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
+    fx.setDepth(100)
+    if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
+    if (this.scene.tweens) {
+      this.scene.tweens.add({
+        targets: fx,
+        y: fx.y - 40,
+        alpha: 0,
+        duration: 600,
+        onComplete: () => fx.destroy()
+      })
+    } else {
+      this.scene.time?.delayedCall(600, () => fx.destroy())
+    }
   }
 
   /**

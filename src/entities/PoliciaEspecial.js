@@ -18,6 +18,12 @@ export default class PoliciaEspecial extends Enemy {
       type: 'especial'
     })
     this._role = 'flanker' // faster unit, natural flanker
+
+    // Larger hitbox — fast unit needs to be hittable, offset higher for torso
+    if (this.body?.setSize) {
+      this.body.setSize(22, 26)
+      this.body.setOffset(13, 14)
+    }
   }
 
   update (delta) {
