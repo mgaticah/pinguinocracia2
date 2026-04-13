@@ -23,8 +23,10 @@ export default class PauseScene extends Phaser.Scene {
     this.titleText = this.add.text(width / 2, height * 0.25, 'PAUSA', {
       fontFamily: 'monospace',
       fontSize: '72px',
-      color: '#1a3a6b',
+      color: '#ffffff',
       fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
       align: 'center'
     }).setOrigin(0.5)
 
@@ -41,27 +43,49 @@ export default class PauseScene extends Phaser.Scene {
       const x = width / 2
       const y = startY + i * spacing
 
+      // Button background
+      const bg = this.add.graphics()
+      this._drawButtonBg(bg, x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, false)
+
       const text = this.add.text(x, y, label, {
         fontFamily: 'monospace',
         fontSize: '28px',
-        color: '#1a3a6b',
+        color: '#ffffff',
         align: 'center'
       }).setOrigin(0.5)
 
       const hitZone = this.add.zone(x, y, btnWidth, btnHeight).setInteractive({ useHandCursor: true })
 
       hitZone.on('pointerover', () => {
-        text.setColor('#ffffff')
+        bg.clear()
+        this._drawButtonBg(bg, x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, true)
+        text.setColor('#ffdd44')
       })
 
       hitZone.on('pointerout', () => {
-        text.setColor('#1a3a6b')
+        bg.clear()
+        this._drawButtonBg(bg, x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, false)
+        text.setColor('#ffffff')
       })
 
       hitZone.on('pointerdown', () => this._onButtonClick(label))
 
-      this.menuButtons.push({ text, hitZone, label })
+      this.menuButtons.push({ bg, text, hitZone, label })
     })
+  }
+
+  /**
+   * Draw a button background rectangle.
+   */
+  _drawButtonBg (gfx, x, y, w, h, hovered) {
+    if (hovered) {
+      gfx.fillStyle(0x2244aa, 0.85)
+    } else {
+      gfx.fillStyle(0x000000, 0.5)
+    }
+    gfx.fillRoundedRect(x, y, w, h, 8)
+    gfx.lineStyle(2, 0xffffff, 0.6)
+    gfx.strokeRoundedRect(x, y, w, h, 8)
   }
 
   /**
