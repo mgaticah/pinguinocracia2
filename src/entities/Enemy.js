@@ -28,11 +28,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // Scale up sprite for visibility
     if (this.setScale) this.setScale(2)
 
-    // Shrink physics body to lower torso/feet area
-    // Must fit through 1-tile (48px) gaps: 20×20 * scale 2 = 40×40
+    // Shrink physics body — covers torso area for better projectile hits
+    // Must fit through 1-tile (48px) gaps: 22×24 * scale 2 = 44×48
     if (this.body?.setSize) {
-      this.body.setSize(20, 20)
-      this.body.setOffset(14, 24)
+      this.body.setSize(22, 24)
+      this.body.setOffset(13, 16)
     }
 
     this.hp = config.hp ?? 10

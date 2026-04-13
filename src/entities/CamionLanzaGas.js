@@ -22,10 +22,10 @@ export default class CamionLanzaGas extends Enemy {
       type: 'gas'
     })
 
-    // Vehicles use 96×96 frames — adjust body for larger sprite
+    // Vehicles use 96×96 frames — body covers center mass for projectile hits
     if (this.body?.setSize) {
-      this.body.setSize(48, 32)
-      this.body.setOffset(24, 56)
+      this.body.setSize(48, 40)
+      this.body.setOffset(24, 28)
     }
 
     this._role = 'blocker'
