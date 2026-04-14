@@ -2,19 +2,19 @@
 
 ## Introducción
 
-Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para navegador web, desarrollado con HTML5, JavaScript y Phaser. El jugador controla a un estudiante con uniforme escolar azul que debe sobrevivir oleadas progresivas de policías enemigos. El jugador puede recoger powerups, cambiar entre armas y resistir el mayor tiempo posible antes de ser derrotado.
+Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para navegador web, desarrollado con HTML5, JavaScript y Phaser. El jugador controla a un pingüino vestido de escolar que debe sobrevivir oleadas progresivas de osos polares, perros siberianos, orcas y morsas enemigos. El estilo visual es caricaturesco y divertido. El jugador puede recoger powerups, cambiar entre armas y avanzar por los niveles hasta llegar a Plaza Italia.
 
 ## Glosario
 
 - **Game**: El sistema principal del juego que gestiona el ciclo de vida, escenas y estado global.
-- **Player**: El personaje controlado por el usuario, representado como un estudiante con uniforme azul.
-- **Enemy**: Unidad enemiga controlada por la IA que persigue y ataca al Player y a los Aliados. Puede ser PolicíaEstándar, PolicíaMontado, CamiónLanzaAgua o CamiónLanzaGas.
-- **PolicíaEstándar**: Tipo de Enemy con 10 HP, velocidad base, ataque cuerpo a cuerpo de 1 punto de daño y cooldown de 1 segundo.
-- **PolicíaMontado**: Tipo de Enemy con 15 HP, velocidad un 20% mayor a la base, que embiste al objetivo infligiendo 2 puntos de daño y empujándolo al impactar.
-- **CamiónLanzaAgua**: Tipo de Enemy con 30 HP, movimiento lento, que dispara un chorro continuo en cono frontal a distancia, empuja y ralentiza a los afectados.
-- **CamiónLanzaGas**: Tipo de Enemy con 25 HP, movimiento lento, que dispara nubes de gas creando una ZonaDeGas circular en el suelo.
-- **ZonaDeGas**: Área circular persistente en el Map generada por el CamiónLanzaGas que causa daño gradual y reduce la visibilidad del Player mientras permanece en ella.
-- **ChorroDAgua**: Proyectil continuo en cono frontal disparado por el CamiónLanzaAgua que empuja y ralentiza a los objetivos impactados.
+- **Player**: El personaje controlado por el usuario, representado como un pingüino vestido de escolar.
+- **Enemy**: Unidad enemiga controlada por la IA que persigue y ataca al Player y a los Aliados. Puede ser OsoPolarEstándar, PerroSiberianoEspecial, OrcaLanzaAgua o MorsaLanzaGas.
+- **OsoPolarEstándar**: Tipo de Enemy con 10 HP, velocidad base, ataque cuerpo a cuerpo de 1 punto de daño y cooldown de 1 segundo. Representado como un oso polar antropomórfico policía.
+- **PerroSiberianoEspecial**: Tipo de Enemy con 20 HP, velocidad un 50% mayor a la base, que embiste al objetivo infligiendo 3 puntos de daño y empujándolo al impactar. Representado como un perro siberiano antropomórfico con escudo y palo.
+- **OrcaLanzaAgua**: Tipo de Enemy con 30 HP, movimiento lento, que dispara un chorro continuo en cono frontal a distancia, empuja y ralentiza a los afectados. Representada como una orca antropomórfica.
+- **MorsaLanzaGas**: Tipo de Enemy con 25 HP, movimiento lento, que dispara nubes de gas creando una ZonaDeGas circular en el suelo. Representada como una morsa antropomórfica.
+- **ZonaDeGas**: Área circular persistente en el Map generada por el MorsaLanzaGas que causa daño gradual y reduce la visibilidad del Player mientras permanece en ella.
+- **ChorroDAgua**: Proyectil continuo en cono frontal disparado por el OrcaLanzaAgua que empuja y ralentiza a los objetivos impactados.
 - **Squad**: Grupo de enemigos que aparecen juntos en el mapa. La composición varía según el tiempo de partida.
 - **Weapon**: Arma equipada por el Player para atacar enemigos. Puede ser Piedra o Molotov.
 - **Piedra**: Arma de munición infinita que inflige 1 punto de daño.
@@ -35,14 +35,14 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 - **Map**: Escenario del juego, de dimensiones mayores a la pantalla, con obstáculos transitables.
 - **ZonaDeSalida**: Área del Map que, al ser pisada por el Player, inicia la transición al siguiente Map conectado.
 - **PuntoDeEntrada**: Coordenada del Map donde el Player y los aliados aparecen al llegar desde otro Map.
-- **Aliado**: Personaje autónomo controlado por la IA que acompaña y apoya al Player durante la partida.
-- **AliiadoEstándar**: Tipo de Aliado con 10 HP, velocidad normal y capacidad de usar Piedras y Molotovs.
-- **AliiadoRápido**: Tipo de Aliado con 8 HP, velocidad 20% mayor a la base y daño normal. Asociado a colegios de niñas.
-- **AliadoPunk**: Tipo de Aliado con 12 HP, velocidad 10% menor a la base, comportamiento más agresivo y que agrega 3 Molotovs al contador global al aparecer. Tiene 20% de probabilidad de aparecer.
+- **Aliado**: Personaje autónomo controlado por la IA que acompaña y apoya al Player durante la partida. Representado como un pingüino vestido de escolar.
+- **AliiadoEstándar**: Tipo de Aliado con 10 HP, velocidad normal y capacidad de usar Piedras y Molotovs. Pingüino escolar estándar.
+- **AliiadoRápido**: Tipo de Aliado con 8 HP, velocidad alta (220) y comportamiento evasivo hit-and-run. Pingüino escolar rápido.
+- **AliadoPunk**: Tipo de Aliado con 12 HP, velocidad 10% menor a la base, comportamiento más agresivo y que agrega 3 Molotovs al contador global al aparecer. Pingüino escolar punk.
 - **ContadorGlobal**: Reserva compartida de Molotovs accesible tanto por el Player como por los Aliados.
 - **FormacionAliados**: Disposición espacial de los Aliados alrededor del Player para evitar superposición.
 - **EstiloSketch**: Estética visual del juego basada en trazos irregulares dibujados a mano con lápiz pasta azul sobre fondo de hoja de cuaderno universitario con líneas horizontales azules y margen rojo opcional.
-- **ElementoMapa**: Cualquier componente visual o funcional del Map, incluyendo calles, veredas, esquinas, cruces, plazas pequeñas, patios escolares, muros, rejas y obstáculos varios.
+- **ElementoMapa**: Cualquier componente visual o funcional del Map, incluyendo calles, veredas, esquinas, cruces, plazas pequeñas, patios, muros, rejas y obstáculos varios.
 - **PuntoSpawnEnemigo**: Coordenada en el borde del Map donde el SpawnSystem puede generar Squads de enemigos.
 - **PuntoSpawnPowerup**: Coordenada transitable del Map donde el PowerupSpawnSystem puede generar Powerups.
 - **ZonaSalida**: Área marcada en el borde del Map que, al ser pisada por el Player, inicia la transición al Map conectado. Sinónimo de ZonaDeSalida.
@@ -53,9 +53,9 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 - **SpriteArma**: SpriteObjeto que representa un arma lanzable por el Player o los Aliados (Piedra, Molotov), con EstiloSketch consistente con el resto del juego.
 - **SpritePowerup**: SpriteObjeto que representa un Powerup recogible en el Map (Botellita, Manzana, Maruchan, Energética), visualmente distinguible de las armas mediante un EfectoRecogible.
 - **EfectoRecogible**: Indicador visual aplicado a los SpritePowerup para señalar que son recogibles, compuesto por un leve brillo y un contorno/outline adicional sobre el sprite base.
-- **SpriteVehiculo**: Archivo PNG con fondo transparente que contiene todos los frames de animación de un vehículo enemigo (CamiónLanzaAgua o CamiónLanzaGas) organizados en una grilla de 4 columnas (direcciones) × 2 filas (frames por dirección), con dimensiones de 96×96 o 128×128 píxeles por frame, compatible con Phaser.
-- **EfectoChorro**: Sprite animado independiente que representa el chorro de agua disparado por el CamiónLanzaAgua, con forma de cono frontal y 2-3 frames de animación, en EstiloSketch.
-- **EfectoGas**: Sprite animado independiente que representa la nube de gas disparada por el CamiónLanzaGas, con forma circular y animación de expansión en 3 frames, en EstiloSketch.
+- **SpriteVehiculo**: Archivo PNG con fondo transparente que contiene todos los frames de animación de un vehículo enemigo (OrcaLanzaAgua o MorsaLanzaGas) organizados en una grilla de 4 columnas (direcciones) × 2 filas (frames por dirección), con dimensiones de 96×96 o 128×128 píxeles por frame, compatible con Phaser.
+- **EfectoChorro**: Sprite animado independiente que representa el chorro de agua disparado por el OrcaLanzaAgua, con forma de cono frontal y 2-3 frames de animación, en EstiloSketch.
+- **EfectoGas**: Sprite animado independiente que representa la nube de gas disparada por el MorsaLanzaGas, con forma circular y animación de expansión en 3 frames, en EstiloSketch.
 - **FrameVehiculo**: Unidad mínima de animación de un vehículo enemigo, de 96×96 o 128×128 píxeles, que representa una pose específica en una dirección determinada dentro de un SpriteVehiculo.
 - **PantallaTitulo**: Escena inicial del juego que muestra el LogoJuego, el fondo estilo cuaderno universitario y el MenuPrincipal antes de que el jugador inicie una partida.
 - **MenuPrincipal**: Conjunto de botones interactivos presentados en la PantallaTitulo que permiten al jugador iniciar una partida nueva, cargar una partida guardada, acceder a opciones o ver los créditos.
@@ -133,18 +133,18 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 
 #### Criterios de Aceptación
 
-1. THE PolicíaEstándar SHALL iniciar con 10 puntos de vida y moverse a velocidad base.
-2. WHILE el PolicíaEstándar está activo en el Map, THE PolicíaEstándar SHALL moverse en dirección al objetivo más cercano entre el Player y los Aliados activos.
-3. WHEN el PolicíaEstándar está en rango de cuerpo a cuerpo del objetivo, THE PolicíaEstándar SHALL infligir 1 punto de daño al objetivo.
-4. WHEN el PolicíaEstándar inflige daño, THE PolicíaEstándar SHALL iniciar un cooldown de 1 segundo antes de poder volver a atacar.
-5. THE PolicíaMontado SHALL iniciar con 15 puntos de vida y moverse a una velocidad un 20% mayor a la velocidad base.
-6. WHILE el PolicíaMontado está activo en el Map, THE PolicíaMontado SHALL moverse en dirección al objetivo más cercano entre el Player y los Aliados activos.
-7. WHEN el PolicíaMontado impacta al objetivo, THE PolicíaMontado SHALL infligir 2 puntos de daño y empujar al objetivo en la dirección del impacto.
-8. THE CamiónLanzaAgua SHALL iniciar con 30 puntos de vida y moverse a velocidad lenta.
-9. WHILE el CamiónLanzaAgua está activo en el Map, THE CamiónLanzaAgua SHALL disparar un ChorroDAgua continuo en cono frontal hacia el objetivo más cercano.
-10. WHEN el ChorroDAgua impacta al Player o a un Aliado, THE CamiónLanzaAgua SHALL empujar al objetivo en la dirección del chorro y reducir su velocidad de movimiento durante el tiempo de contacto.
-11. THE CamiónLanzaGas SHALL iniciar con 25 puntos de vida y moverse a velocidad lenta.
-12. WHILE el CamiónLanzaGas está activo en el Map, THE CamiónLanzaGas SHALL disparar nubes de gas que crean una ZonaDeGas circular en el suelo.
+1. THE OsoPolarEstándar SHALL iniciar con 10 puntos de vida y moverse a velocidad base.
+2. WHILE el OsoPolarEstándar está activo en el Map, THE OsoPolarEstándar SHALL moverse en dirección al objetivo más cercano entre el Player y los Aliados activos.
+3. WHEN el OsoPolarEstándar está en rango de cuerpo a cuerpo del objetivo, THE OsoPolarEstándar SHALL infligir 1 punto de daño al objetivo.
+4. WHEN el OsoPolarEstándar inflige daño, THE OsoPolarEstándar SHALL iniciar un cooldown de 1 segundo antes de poder volver a atacar.
+5. THE PerroSiberianoEspecial SHALL iniciar con 15 puntos de vida y moverse a una velocidad un 20% mayor a la velocidad base.
+6. WHILE el PerroSiberianoEspecial está activo en el Map, THE PerroSiberianoEspecial SHALL moverse en dirección al objetivo más cercano entre el Player y los Aliados activos.
+7. WHEN el PerroSiberianoEspecial impacta al objetivo, THE PerroSiberianoEspecial SHALL infligir 2 puntos de daño y empujar al objetivo en la dirección del impacto.
+8. THE OrcaLanzaAgua SHALL iniciar con 30 puntos de vida y moverse a velocidad lenta.
+9. WHILE el OrcaLanzaAgua está activo en el Map, THE OrcaLanzaAgua SHALL disparar un ChorroDAgua continuo en cono frontal hacia el objetivo más cercano.
+10. WHEN el ChorroDAgua impacta al Player o a un Aliado, THE OrcaLanzaAgua SHALL empujar al objetivo en la dirección del chorro y reducir su velocidad de movimiento durante el tiempo de contacto.
+11. THE MorsaLanzaGas SHALL iniciar con 25 puntos de vida y moverse a velocidad lenta.
+12. WHILE el MorsaLanzaGas está activo en el Map, THE MorsaLanzaGas SHALL disparar nubes de gas que crean una ZonaDeGas circular en el suelo.
 13. WHILE el Player permanece dentro de una ZonaDeGas, THE ZonaDeGas SHALL infligir daño gradual al Player y reducir su visibilidad.
 14. WHILE cualquier Enemy está activo en el Map, THE Enemy SHALL evitar obstáculos del Map durante su desplazamiento.
 15. WHILE múltiples Enemies están activos en el Map, THE Enemy SHALL evitar superponerse con otros Enemies durante su desplazamiento.
@@ -160,11 +160,11 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 1. THE SpawnSystem SHALL generar el primer Squad 60 segundos después del inicio de la partida.
 2. THE SpawnSystem SHALL reducir el intervalo de spawn de forma progresiva siguiendo la secuencia: 60s → 45s → 30s → 20s → 15s → 10s → 5s.
 3. THE SpawnSystem SHALL mantener el intervalo mínimo de spawn en 5 segundos sin reducirlo más.
-4. WHILE el tiempo de partida es menor a 2 minutos, THE SpawnSystem SHALL generar Squads compuestos únicamente por PolicíasEstándar.
-5. WHEN el tiempo de partida alcanza los 2 minutos, THE SpawnSystem SHALL incluir PolicíasMontados en la composición de los Squads generados.
-6. WHEN el tiempo de partida alcanza los 4 minutos, THE SpawnSystem SHALL incluir CamionesDeLanzaAgua en la composición de los Squads generados.
-7. WHEN el tiempo de partida alcanza los 6 minutos, THE SpawnSystem SHALL incluir CamionesDeLanzaGas en la composición de los Squads generados.
-8. THE SpawnSystem SHALL generar Squads con composiciones mixtas válidas, incluyendo: 4 PolicíasEstándar, 3 PolicíasEstándar + 1 PolicíaMontado, 2 PolicíasEstándar + 1 PolicíaMontado + 1 CamiónLanzaAgua, y 1 CamiónLanzaAgua + 3 PolicíasMontados.
+4. WHILE el tiempo de partida es menor a 2 minutos, THE SpawnSystem SHALL generar Squads compuestos únicamente por OsosPolaresEstándar.
+5. WHEN el tiempo de partida alcanza los 2 minutos, THE SpawnSystem SHALL incluir PerrosSiberianosEspeciales en la composición de los Squads generados.
+6. WHEN el tiempo de partida alcanza los 4 minutos, THE SpawnSystem SHALL incluir OrcasLanzaAgua en la composición de los Squads generados.
+7. WHEN el tiempo de partida alcanza los 6 minutos, THE SpawnSystem SHALL incluir MorsasLanzaGas en la composición de los Squads generados.
+8. THE SpawnSystem SHALL generar Squads con composiciones mixtas válidas, incluyendo: 4 OsosPolaresEstándar, 3 OsosPolaresEstándar + 1 PerroSiberianoEspecial, 2 OsosPolaresEstándar + 1 PerroSiberianoEspecial + 1 OrcaLanzaAgua, y 1 OrcaLanzaAgua + 3 PerrosSiberianosEspeciales.
 9. THE SpawnSystem SHALL generar Squads en los bordes del Map o en calles abiertas del Map.
 10. IF el punto de spawn seleccionado está a menos de una distancia mínima del Player, THEN THE SpawnSystem SHALL seleccionar otro punto de spawn más alejado.
 11. WHEN el tiempo sobrevivido aumenta, THE SpawnSystem SHALL incrementar la dificultad de los Squads generados.
@@ -370,7 +370,7 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 
 **ElementosMapa y colisiones:**
 
-13. THE Map SHALL contener los siguientes ElementoMapa transitables: calles, veredas, esquinas, cruces, plazas pequeñas y patios escolares.
+13. THE Map SHALL contener los siguientes ElementoMapa transitables: calles, veredas, esquinas, cruces, plazas pequeñas y patios.
 14. THE Map SHALL contener los siguientes ElementoMapa que bloquean el movimiento: muros, edificios, árboles, rejas y mobiliario urbano.
 15. WHEN el Player o un Enemy colisiona con un ElementoMapa que bloquea el movimiento, THE Game SHALL detener el desplazamiento del personaje sin permitirle atravesarlo.
 16. WHILE el Player o un Enemy se desplaza sobre calles o veredas, THE Game SHALL permitir el movimiento libre sin restricciones de colisión.
@@ -558,8 +558,8 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 **Personajes requeridos:**
 
 9. THE Game SHALL disponer de un Spritesheet para el Player con uniforme azul, pantalón gris y mochila.
-10. THE Game SHALL disponer de un Spritesheet para el PolicíaEstándar con uniforme verde, casco simple y postura rígida.
-11. THE Game SHALL disponer de un Spritesheet para el PolicíaMontado que represente a un policía con uniforme verde montado sobre un caballo simple, con AnimacionCaminar del caballo.
+10. THE Game SHALL disponer de un Spritesheet para el OsoPolarEstándar con uniforme verde, casco simple y postura rígida.
+11. THE Game SHALL disponer de un Spritesheet para el PerroSiberianoEspecial que represente a un policía con uniforme verde montado sobre un caballo simple, con AnimacionCaminar del caballo.
 12. THE Game SHALL disponer de un Spritesheet para el AliiadoEstándar con uniforme escolar distinto al del Player.
 13. THE Game SHALL disponer de un Spritesheet para el AliiadoRápido con uniforme escolar femenino que refleje su mayor ligereza.
 14. THE Game SHALL disponer de un Spritesheet para el AliadoPunk con complexión más robusta, peinado punk, mochila y postura agresiva.
@@ -623,8 +623,8 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 2. THE SpriteVehiculo SHALL organizar los FrameVehiculo en una grilla de 4 columnas (direcciones: arriba, abajo, izquierda, derecha) × 2 filas (frames: idle, movimiento), totalizando 8 FrameVehiculo por vehículo.
 3. THE FrameVehiculo SHALL tener dimensiones de 96×96 o 128×128 píxeles, centrado en el canvas.
 4. THE SpriteVehiculo SHALL ser compatible con la configuración de Phaser frameWidth y frameHeight correspondientes al tamaño definido.
-5. THE EfectoChorro SHALL ser un archivo PNG con fondo transparente, independiente del SpriteVehiculo del CamiónLanzaAgua.
-6. THE EfectoGas SHALL ser un archivo PNG con fondo transparente, independiente del SpriteVehiculo del CamiónLanzaGas.
+5. THE EfectoChorro SHALL ser un archivo PNG con fondo transparente, independiente del SpriteVehiculo del OrcaLanzaAgua.
+6. THE EfectoGas SHALL ser un archivo PNG con fondo transparente, independiente del SpriteVehiculo del MorsaLanzaGas.
 
 **Escala:**
 
@@ -634,31 +634,31 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 
 8. THE SpriteVehiculo SHALL renderizarse con EstiloSketch: dibujado a mano con lápiz pasta azul, líneas simples e irregulares, colores planos suaves y vista cenital (top-down), consistente con los personajes existentes del juego.
 9. THE SpriteVehiculo SHALL incluir una sombra simple dibujada a mano debajo del vehículo en todos los FrameVehiculo.
-10. THE SpriteVehiculo SHALL mantener escala, proporción y estilo visual consistentes entre el CamiónLanzaAgua y el CamiónLanzaGas.
+10. THE SpriteVehiculo SHALL mantener escala, proporción y estilo visual consistentes entre el OrcaLanzaAgua y el MorsaLanzaGas.
 
-**Spritesheet CamiónLanzaAgua:**
+**Spritesheet OrcaLanzaAgua:**
 
-11. THE Game SHALL disponer de un SpriteVehiculo para el CamiónLanzaAgua que represente un vehículo grande en vista cenital con cañón frontal visible y EstiloSketch.
-12. THE SpriteVehiculo del CamiónLanzaAgua SHALL contener 8 FrameVehiculo organizados en 4 direcciones × 2 frames (idle, movimiento).
-13. THE SpriteVehiculo del CamiónLanzaAgua SHALL soportar las animaciones: idle, movimiento y disparo de agua.
+11. THE Game SHALL disponer de un SpriteVehiculo para el OrcaLanzaAgua que represente un vehículo grande en vista cenital con cañón frontal visible y EstiloSketch.
+12. THE SpriteVehiculo del OrcaLanzaAgua SHALL contener 8 FrameVehiculo organizados en 4 direcciones × 2 frames (idle, movimiento).
+13. THE SpriteVehiculo del OrcaLanzaAgua SHALL soportar las animaciones: idle, movimiento y disparo de agua.
 
-**Spritesheet CamiónLanzaGas:**
+**Spritesheet MorsaLanzaGas:**
 
-14. THE Game SHALL disponer de un SpriteVehiculo para el CamiónLanzaGas que represente un vehículo de tamaño similar al CamiónLanzaAgua con tubo superior visible y EstiloSketch.
-15. THE SpriteVehiculo del CamiónLanzaGas SHALL contener 8 FrameVehiculo organizados en 4 direcciones × 2 frames (idle, movimiento).
-16. THE SpriteVehiculo del CamiónLanzaGas SHALL soportar las animaciones: idle, movimiento y disparo de gas.
+14. THE Game SHALL disponer de un SpriteVehiculo para el MorsaLanzaGas que represente un vehículo de tamaño similar al OrcaLanzaAgua con tubo superior visible y EstiloSketch.
+15. THE SpriteVehiculo del MorsaLanzaGas SHALL contener 8 FrameVehiculo organizados en 4 direcciones × 2 frames (idle, movimiento).
+16. THE SpriteVehiculo del MorsaLanzaGas SHALL soportar las animaciones: idle, movimiento y disparo de gas.
 
 **Sprite EfectoChorro:**
 
-17. THE Game SHALL disponer de un EfectoChorro para el CamiónLanzaAgua que represente un cono frontal de agua con EstiloSketch.
+17. THE Game SHALL disponer de un EfectoChorro para el OrcaLanzaAgua que represente un cono frontal de agua con EstiloSketch.
 18. THE EfectoChorro SHALL contener entre 2 y 3 frames de animación.
-19. WHEN el CamiónLanzaAgua dispara, THE Game SHALL reproducir la animación del EfectoChorro en ciclo continuo durante el tiempo de disparo.
+19. WHEN el OrcaLanzaAgua dispara, THE Game SHALL reproducir la animación del EfectoChorro en ciclo continuo durante el tiempo de disparo.
 
 **Sprite EfectoGas:**
 
-20. THE Game SHALL disponer de un EfectoGas para el CamiónLanzaGas que represente una nube circular con EstiloSketch.
+20. THE Game SHALL disponer de un EfectoGas para el MorsaLanzaGas que represente una nube circular con EstiloSketch.
 21. THE EfectoGas SHALL contener exactamente 3 frames de animación que representen la expansión de la nube.
-22. WHEN el CamiónLanzaGas dispara, THE Game SHALL reproducir la animación del EfectoGas en ciclo continuo durante el tiempo de disparo.
+22. WHEN el MorsaLanzaGas dispara, THE Game SHALL reproducir la animación del EfectoGas en ciclo continuo durante el tiempo de disparo.
 
 ---
 
@@ -766,7 +766,7 @@ Pingüinocracia 2 es un juego de acción 2D con vista cenital (top-down) para na
 
 **Spawn durante el evento:**
 
-7. WHILE el EventoFinal está activo, THE SpawnSystem SHALL generar Squads de forma constante con dificultad alta, incluyendo todos los tipos de Enemy activos: PolicíaEstándar, PolicíaMontado, CamiónLanzaAgua y CamiónLanzaGas.
+7. WHILE el EventoFinal está activo, THE SpawnSystem SHALL generar Squads de forma constante con dificultad alta, incluyendo todos los tipos de Enemy activos: OsoPolarEstándar, PerroSiberianoEspecial, OrcaLanzaAgua y MorsaLanzaGas.
 8. WHILE el EventoFinal está activo, THE SpawnSystem SHALL generar Squads de mayor tamaño que en los Maps anteriores.
 9. WHILE el EventoFinal está activo, THE SpawnSystem SHALL generar Squads desde múltiples PuntoSpawnEnemigo en los bordes del Map "Plaza Italia".
 

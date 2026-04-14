@@ -2,7 +2,7 @@
 
 ## Visión General
 
-Pingüinocracia 2 es un juego de acción top-down 2D para navegador web construido con **Phaser 3** (JavaScript). El jugador controla a un estudiante que debe sobrevivir oleadas de policías enemigos, recoger powerups, gestionar aliados y avanzar por múltiples mapas hasta llegar a Plaza Italia.
+Pingüinocracia 2 es un juego de acción top-down 2D para navegador web construido con **Phaser 3** (JavaScript). El jugador controla a un pingüino escolar que debe sobrevivir oleadas de osos polares enemigos, recoger powerups, gestionar aliados y avanzar por múltiples mapas hasta llegar a Plaza Italia.
 
 El estilo visual **EstiloSketch** (lápiz pasta azul sobre hoja de cuaderno universitario) es transversal a todos los assets y la UI.
 
@@ -139,7 +139,7 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
 }
 ```
 
-Subclases: `PoliciaEstandar`, `PoliciaEspecial`, `CamionLanzaAgua`, `CamionLanzaGas`
+Subclases: `OsoPolarEstandar`, `PoliciaEspecial`, `OrcaLanzaAgua`, `MorsaLanzaGas`
 
 ### Ally (clase base)
 
@@ -446,10 +446,10 @@ Se usa **EasyStar.js** (A* sobre la grilla del tilemap) para que los enemigos ro
 Tiempo (s) │ Intervalo spawn │ Tipos disponibles
 ───────────┼─────────────────┼──────────────────────────────────
 0–60       │ (sin spawn)     │ —
-60–        │ 60s             │ PolicíaEstándar
-120–       │ 45s             │ + PolicíaMontado
-240–       │ 30s             │ + CamiónLanzaAgua
-360–       │ 20s             │ + CamiónLanzaGas
+60–        │ 60s             │ OsoPolarEstándar
+120–       │ 45s             │ + PerroSiberianoEspecial
+240–       │ 30s             │ + OrcaLanzaAgua
+360–       │ 20s             │ + MorsaLanzaGas
 (progresivo)│ 15s → 10s → 5s │ todos
 ```
 
@@ -599,7 +599,7 @@ Cada propiedad correcta del diseño se implementa con **un único test de propie
 
 ### Propiedad 9: Composición de Squad solo incluye tipos habilitados por tiempo
 
-*Para cualquier* Squad generado en tiempo `t`, todos los tipos de Enemy en el Squad deben estar habilitados para ese tiempo (PolicíaEstándar siempre, PolicíaMontado desde t≥120s, CamiónLanzaAgua desde t≥240s, CamiónLanzaGas desde t≥360s).
+*Para cualquier* Squad generado en tiempo `t`, todos los tipos de Enemy en el Squad deben estar habilitados para ese tiempo (OsoPolarEstándar siempre, PerroSiberianoEspecial desde t≥120s, OrcaLanzaAgua desde t≥240s, MorsaLanzaGas desde t≥360s).
 
 **Valida: Requisitos 6.4, 6.5, 6.6, 6.7, 6.8**
 
