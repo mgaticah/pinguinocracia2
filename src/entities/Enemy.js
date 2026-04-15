@@ -182,21 +182,23 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
    * Spawn a hit effect sprite that rises and fades out.
    */
   _spawnHitEffect () {
-    if (!this.scene?.add) return
-    const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
-    fx.setDepth(100)
-    if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
-    if (this.scene.tweens) {
-      this.scene.tweens.add({
-        targets: fx,
-        y: fx.y - 40,
-        alpha: 0,
-        duration: 600,
-        onComplete: () => fx.destroy()
-      })
-    } else {
-      this.scene.time?.delayedCall(600, () => fx.destroy())
-    }
+    if (!this.scene?.add?.sprite) return
+    try {
+      const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
+      fx.setDepth(100)
+      if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
+      if (this.scene.tweens) {
+        this.scene.tweens.add({
+          targets: fx,
+          y: fx.y - 40,
+          alpha: 0,
+          duration: 600,
+          onComplete: () => { if (fx?.destroy) fx.destroy() }
+        })
+      } else if (this.scene.time) {
+        this.scene.time.delayedCall(600, () => { if (fx?.destroy) fx.destroy() })
+      }
+    } catch (_) {}
   }
 
   /**
@@ -211,27 +213,77 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     const points = this._pointsTable[this.enemyType] ?? 10
     EventBus.emit('enemy:killed', { type: this.enemyType, points })
 
+    // Draw a red X over the sprite (tachado estilo cuaderno)
+    this._drawDeathX()
+
     // Play death animation if available, then destroy
     const deathKey = `${this.texture.key}_death`
     if (this.scene && this.scene.anims && this.scene.anims.exists(deathKey)) {
       this.play(deathKey)
       this.once('animationcomplete', () => {
+        this._cleanupDeathX()
         this.destroy()
       })
     } else {
-      // Simple fade-out fallback
+      // Fade out with the X visible, then destroy
       if (this.scene && this.scene.tweens) {
         this.scene.tweens.add({
           targets: this,
           alpha: 0,
-          duration: 300,
+          duration: 600,
           onComplete: () => {
+            this._cleanupDeathX()
             this.destroy()
           }
         })
+        // Fade the X too
+        if (this._deathX) {
+          this.scene.tweens.add({
+            targets: this._deathX,
+            alpha: 0,
+            duration: 600
+          })
+        }
       } else {
+        this._cleanupDeathX()
         this.destroy()
       }
+    }
+  }
+
+  /**
+   * Draw a red X over the enemy sprite (tachado estilo cuaderno).
+   */
+  _drawDeathX () {
+    if (!this.scene?.add?.graphics) return
+
+    try {
+      const gfx = this.scene.add.graphics()
+      gfx.setDepth(this.depth + 1)
+      const size = 30
+
+      gfx.lineStyle(4, 0xcc0000, 0.9)
+      gfx.beginPath()
+      gfx.moveTo(this.x - size, this.y - size)
+      gfx.lineTo(this.x + size, this.y + size)
+      gfx.strokePath()
+
+      gfx.beginPath()
+      gfx.moveTo(this.x + size, this.y - size)
+      gfx.lineTo(this.x - size, this.y + size)
+      gfx.strokePath()
+
+      this._deathX = gfx
+    } catch (_) {}
+  }
+
+  /**
+   * Remove the death X graphic.
+   */
+  _cleanupDeathX () {
+    if (this._deathX?.destroy) {
+      this._deathX.destroy()
+      this._deathX = null
     }
   }
 

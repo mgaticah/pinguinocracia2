@@ -7,6 +7,8 @@ const ATTACK_CLOSE_RANGE = 120
 const MIN_PLAYER_DISTANCE = 48  // 1 cuerpo — no acercarse más
 const MAX_PLAYER_DISTANCE = 480 // 10 cuerpos — no alejarse más
 const REGROUP_DISTANCE = 200    // al reagrupar, vuelve hasta ~4 cuerpos del player
+const WAIT_RESUME_DISTANCE = 96 // 2 cuerpos — retoma marcha cuando player se acerca
+const GO_GO_INTERVAL = 3000     // ms entre mensajes "GO GO"
 
 /**
  * Ally — Base class for all ally types.
@@ -46,6 +48,8 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     this._formationOffset = { x: 0, y: 0 }
     this._lastDirection = 'down'
     this.isDead = false
+    this._waiting = false
+    this._goGoTimer = 0
   }
 
   /**
@@ -61,21 +65,87 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     const player = this.scene?.player
     const distToPlayer = player ? Math.sqrt((this.x - player.x) ** 2 + (this.y - player.y) ** 2) : 0
 
-    // Check for nearby enemies
+    // Check for nearby enemies — combat always takes priority
     const enemies = this._getEnemies()
     const nearest = this._findNearestEnemy(enemies)
 
-    // State selection
-    if (distToPlayer > MAX_PLAYER_DISTANCE) {
-      // Too far from player — regroup
-      this._doRegroup(player)
-    } else if (nearest) {
-      // Enemy in range — fight
+    if (nearest) {
+      // Combat interrupts waiting
+      this._waiting = false
       this.attackNearestEnemy(nearest)
+      return
+    }
+
+    // Check if player is moving
+    const playerMoving = player && (
+      Math.abs(player.body?.velocity?.x ?? 0) > 5 ||
+      Math.abs(player.body?.velocity?.y ?? 0) > 5
+    )
+
+    // Enter wait state: reached max distance and player is stopped
+    if (!this._waiting && distToPlayer >= MAX_PLAYER_DISTANCE && !playerMoving) {
+      this._waiting = true
+      this._goGoTimer = 0
+    }
+
+    // Exit wait state: player approached within 2 cuerpos
+    if (this._waiting && distToPlayer <= WAIT_RESUME_DISTANCE) {
+      this._waiting = false
+    }
+
+    // State execution
+    if (this._waiting) {
+      this._doWait(player, delta)
+    } else if (distToPlayer > MAX_PLAYER_DISTANCE) {
+      this._doRegroup(player)
     } else {
-      // No enemies — advance toward goal, loosely following player
       this._doAdvance(player)
     }
+  }
+
+  /**
+   * Wait for the player to catch up. Show "GO GO" periodically.
+   * @param {object} player
+   * @param {number} delta - ms
+   */
+  _doWait (player, delta) {
+    this.setVelocity(0, 0)
+    this._updateAnimation()
+
+    // Show "GO GO" message periodically
+    this._goGoTimer += delta
+    if (this._goGoTimer >= GO_GO_INTERVAL) {
+      this._goGoTimer = 0
+      this._showGoGoMessage()
+    }
+  }
+
+  /**
+   * Show a floating "GO GO!" text above the ally.
+   */
+  _showGoGoMessage () {
+    if (!this.scene?.add?.text) return
+    try {
+      const msg = this.scene.add.text(this.x, this.y - 50, 'GO GO!', {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#ffdd44',
+        stroke: '#000000',
+        strokeThickness: 2
+      }).setOrigin(0.5).setDepth(10)
+
+      if (this.scene.tweens) {
+        this.scene.tweens.add({
+          targets: msg,
+          y: this.y - 80,
+          alpha: 0,
+          duration: 1200,
+          onComplete: () => { if (msg?.destroy) msg.destroy() }
+        })
+      } else if (this.scene.time) {
+        this.scene.time.delayedCall(1200, () => { if (msg?.destroy) msg.destroy() })
+      }
+    } catch (_) {}
   }
 
   /**
@@ -400,21 +470,23 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
    * Spawn a hit effect sprite that rises and fades out.
    */
   _spawnHitEffect () {
-    if (!this.scene?.add) return
-    const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
-    fx.setDepth(100)
-    if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
-    if (this.scene.tweens) {
-      this.scene.tweens.add({
-        targets: fx,
-        y: fx.y - 40,
-        alpha: 0,
-        duration: 600,
-        onComplete: () => fx.destroy()
-      })
-    } else {
-      this.scene.time?.delayedCall(600, () => fx.destroy())
-    }
+    if (!this.scene?.add?.sprite) return
+    try {
+      const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
+      fx.setDepth(100)
+      if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
+      if (this.scene.tweens) {
+        this.scene.tweens.add({
+          targets: fx,
+          y: fx.y - 40,
+          alpha: 0,
+          duration: 600,
+          onComplete: () => { if (fx?.destroy) fx.destroy() }
+        })
+      } else if (this.scene.time) {
+        this.scene.time.delayedCall(600, () => { if (fx?.destroy) fx.destroy() })
+      }
+    } catch (_) {}
   }
 
   /**

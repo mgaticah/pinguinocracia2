@@ -57,7 +57,7 @@ function createMock () {
 
 function overlayMock () {
   return {
-    add: { graphics: vi.fn(() => ({ fillStyle: vi.fn(), fillRect: vi.fn() })), text: vi.fn((x, y, c) => ({ x, y, text: c, style: {}, setOrigin: vi.fn().mockReturnThis(), setColor: vi.fn().mockReturnThis(), setScrollFactor: vi.fn().mockReturnThis(), setDepth: vi.fn().mockReturnThis(), active: true, destroy: vi.fn() })), zone: vi.fn(() => { const h = {}; return { setInteractive: vi.fn().mockReturnThis(), on: vi.fn((e, cb) => { h[e] = h[e] || []; h[e].push(cb); return { setInteractive: vi.fn().mockReturnThis(), on: vi.fn() } }), _handlers: h } }) },
+    add: { graphics: vi.fn(() => ({ fillStyle: vi.fn(), fillRect: vi.fn(), fillRoundedRect: vi.fn(), lineStyle: vi.fn(), strokeRoundedRect: vi.fn(), clear: vi.fn() })), text: vi.fn((x, y, c) => ({ x, y, text: c, style: {}, setOrigin: vi.fn().mockReturnThis(), setColor: vi.fn().mockReturnThis(), setScrollFactor: vi.fn().mockReturnThis(), setDepth: vi.fn().mockReturnThis(), active: true, destroy: vi.fn() })), zone: vi.fn(() => { const h = {}; return { setInteractive: vi.fn().mockReturnThis(), on: vi.fn((e, cb) => { h[e] = h[e] || []; h[e].push(cb); return { setInteractive: vi.fn().mockReturnThis(), on: vi.fn() } }), _handlers: h } }) },
     cameras: { main: { width: 1920, height: 1080 } },
     scene: { stop: vi.fn(), start: vi.fn(), resume: vi.fn(), get: vi.fn(), settings: { data: { score: 100 } } },
     time: { delayedCall: vi.fn(() => ({ remove: vi.fn() })) }

@@ -21,7 +21,11 @@ function createMockPauseScene () {
     add: {
       graphics: vi.fn(() => ({
         fillStyle: vi.fn().mockReturnThis(),
-        fillRect: vi.fn().mockReturnThis()
+        fillRect: vi.fn().mockReturnThis(),
+        fillRoundedRect: vi.fn().mockReturnThis(),
+        lineStyle: vi.fn().mockReturnThis(),
+        strokeRoundedRect: vi.fn().mockReturnThis(),
+        clear: vi.fn().mockReturnThis()
       })),
       text: vi.fn((x, y, content, style) => {
         const textObj = {
@@ -96,8 +100,8 @@ describe('PauseScene', () => {
       expect(pauseScene.titleText.style.fontFamily).toBe('monospace')
     })
 
-    it('should use EstiloSketch color #1a3a6b', () => {
-      expect(pauseScene.titleText.style.color).toBe('#1a3a6b')
+    it('should use white color for title', () => {
+      expect(pauseScene.titleText.style.color).toBe('#ffffff')
     })
 
     it('should create exactly 4 menu buttons', () => {

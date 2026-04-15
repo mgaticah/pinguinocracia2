@@ -295,21 +295,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * Spawn a hit effect sprite that rises and fades out.
    */
   _spawnHitEffect () {
-    if (!this.scene?.add) return
-    const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
-    fx.setDepth(100)
-    if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
-    if (this.scene.tweens) {
-      this.scene.tweens.add({
-        targets: fx,
-        y: fx.y - 40,
-        alpha: 0,
-        duration: 600,
-        onComplete: () => fx.destroy()
-      })
-    } else {
-      this.scene.time?.delayedCall(600, () => fx.destroy())
-    }
+    if (!this.scene?.add?.sprite) return
+    try {
+      const fx = this.scene.add.sprite(this.x, this.y - 20, 'efecGolpe')
+      fx.setDepth(100)
+      if (this.scene.anims?.exists('efecGolpe')) fx.play('efecGolpe')
+      if (this.scene.tweens) {
+        this.scene.tweens.add({
+          targets: fx,
+          y: fx.y - 40,
+          alpha: 0,
+          duration: 600,
+          onComplete: () => { if (fx?.destroy) fx.destroy() }
+        })
+      } else if (this.scene.time) {
+        this.scene.time.delayedCall(600, () => { if (fx?.destroy) fx.destroy() })
+      }
+    } catch (_) {}
   }
 
   /**

@@ -317,14 +317,24 @@ describe('Ally (base class)', () => {
       expect(scene.projectileGroup.add).toHaveBeenCalled()
     })
 
-    it('should regroup when too far from player (>10 cuerpos)', () => {
-      const player = { x: 0, y: 0, isAlive: true }
+    it('should regroup when too far from player (>10 cuerpos) and player is moving', () => {
+      const player = { x: 0, y: 0, isAlive: true, body: { velocity: { x: 50, y: 0 } } }
       const scene = createMockScene({ player })
       // Place ally 600px away (>480px = 10 cuerpos)
       const ally = new Ally(scene, 600, 0, 'test')
       ally.update(16)
       // Should be moving back toward player (negative vx)
       expect(ally._vx).toBeLessThan(0)
+    })
+
+    it('should wait when too far from player and player is stopped', () => {
+      const player = { x: 0, y: 0, isAlive: true, body: { velocity: { x: 0, y: 0 } } }
+      const scene = createMockScene({ player })
+      const ally = new Ally(scene, 600, 0, 'test')
+      ally.update(16)
+      // Should be waiting (not moving)
+      expect(ally._waiting).toBe(true)
+      expect(ally._vx).toBe(0)
     })
   })
 })

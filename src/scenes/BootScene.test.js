@@ -253,9 +253,10 @@ describe('BootScene', () => {
       // 6 characters × 12 anims (4 walk + 4 idle + 4 attack) = 72
       // 2 vehicles × 16 anims (4 walk + 4 idle + 4 move + 4 attack) = 32
       // 4 powerups = 4
-      // Effects: 4 chorro directional + 1 chorro compat + 1 gas + 1 fuego + 1 alerta = 8
-      // Total: 72 + 32 + 4 + 8 = 116
-      expect(scene._anims.size).toBe(116)
+      // Effects: 4 chorro directional + 1 chorro compat + 1 gas + 1 fuego + 1 alerta + 1 golpe = 9
+      // Projectiles: 2 spin animations
+      // Total: 72 + 32 + 4 + 9 + 2 = 119
+      expect(scene._anims.size).toBe(119)
     })
   })
 
