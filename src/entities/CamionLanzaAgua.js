@@ -132,6 +132,11 @@ export default class CamionLanzaAgua extends Enemy {
       while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI
 
       if (Math.abs(angleDiff) <= CONE_HALF_ANGLE) {
+        // Deal water damage
+        if (t.takeDamage) {
+          t.takeDamage(2, this.x, this.y)
+        }
+
         // Push target away
         if (t.setVelocity) {
           t.setVelocity(
