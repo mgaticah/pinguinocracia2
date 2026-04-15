@@ -99,12 +99,12 @@ export default class Powerup extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
-   * Increments the global molotov counter by 1.
+   * Increments the global molotov counter by 3.
    * @param {object} collector
    */
   _applyBotellita (collector) {
     if (collector.globalCounter) {
-      collector.globalCounter.molotovs += 1
+      collector.globalCounter.molotovs += 3
       EventBus.emit('molotov:changed', { count: collector.globalCounter.molotovs })
     }
   }

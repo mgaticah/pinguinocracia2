@@ -46,7 +46,7 @@ export default class TouchControls {
     this._joyBase = this.scene.add.graphics().setScrollFactor(0).setDepth(200)
     // Joystick thumb
     this._joyThumb = this.scene.add.graphics().setScrollFactor(0).setDepth(201)
-    this._joyThumb.fillStyle(0x1a3a6b, 0.6)
+    this._joyThumb.fillStyle(0x88aadd, 0.8)
     this._joyThumb.fillCircle(0, 0, 25)
 
     // Attack button
@@ -138,9 +138,9 @@ export default class TouchControls {
 
     // Redraw joystick base
     this._joyBase.clear()
-    this._joyBase.fillStyle(0x1a3a6b, 0.3)
+    this._joyBase.fillStyle(0x4466aa, 0.4)
     this._joyBase.fillCircle(lay.joystick.x, lay.joystick.y, R)
-    this._joyBase.lineStyle(2, 0x1a3a6b, 0.5)
+    this._joyBase.lineStyle(2, 0x88aadd, 0.8)
     this._joyBase.strokeCircle(lay.joystick.x, lay.joystick.y, R)
 
     // Reset thumb position
@@ -148,31 +148,33 @@ export default class TouchControls {
 
     // Redraw attack button
     this._atkGfx.clear()
-    this._atkGfx.fillStyle(0xcc2222, 0.4)
+    this._atkGfx.fillStyle(0xcc2222, 0.6)
     this._atkGfx.fillCircle(lay.attack.x, lay.attack.y, 40)
-    this._atkGfx.lineStyle(2, 0xcc2222, 0.6)
+    this._atkGfx.lineStyle(2, 0xff4444, 0.9)
     this._atkGfx.strokeCircle(lay.attack.x, lay.attack.y, 40)
     this._atkLabel.setPosition(lay.attack.x, lay.attack.y)
 
     // Redraw weapon button
     this._wpnGfx.clear()
-    this._wpnGfx.fillStyle(0x1a3a6b, 0.4)
+    this._wpnGfx.fillStyle(0x4466aa, 0.5)
     this._wpnGfx.fillCircle(lay.weapon.x, lay.weapon.y, 30)
+    this._wpnGfx.lineStyle(2, 0x88aadd, 0.8)
+    this._wpnGfx.strokeCircle(lay.weapon.x, lay.weapon.y, 30)
     this._wpnLabel.setPosition(lay.weapon.x, lay.weapon.y)
 
     // Redraw pause button
     this._pauseGfx.clear()
-    this._pauseGfx.fillStyle(0x333333, 0.5)
+    this._pauseGfx.fillStyle(0x555555, 0.6)
     this._pauseGfx.fillCircle(lay.pause.x, lay.pause.y, 25)
-    this._pauseGfx.lineStyle(2, 0xffffff, 0.4)
+    this._pauseGfx.lineStyle(2, 0xffffff, 0.7)
     this._pauseGfx.strokeCircle(lay.pause.x, lay.pause.y, 25)
     this._pauseLabel.setPosition(lay.pause.x, lay.pause.y)
 
     // Redraw save button
     this._saveGfx.clear()
-    this._saveGfx.fillStyle(0x333333, 0.5)
+    this._saveGfx.fillStyle(0x555555, 0.6)
     this._saveGfx.fillCircle(lay.save.x, lay.save.y, 25)
-    this._saveGfx.lineStyle(2, 0xffffff, 0.4)
+    this._saveGfx.lineStyle(2, 0xffffff, 0.7)
     this._saveGfx.strokeCircle(lay.save.x, lay.save.y, 25)
     this._saveLabel.setPosition(lay.save.x, lay.save.y)
   }

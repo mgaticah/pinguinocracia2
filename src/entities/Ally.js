@@ -8,7 +8,10 @@ const MIN_PLAYER_DISTANCE = 48  // 1 cuerpo — no acercarse más
 const MAX_PLAYER_DISTANCE = 480 // 10 cuerpos — no alejarse más
 const REGROUP_DISTANCE = 200    // al reagrupar, vuelve hasta ~4 cuerpos del player
 const WAIT_RESUME_DISTANCE = 96 // 2 cuerpos — retoma marcha cuando player se acerca
-const GO_GO_INTERVAL = 3000     // ms entre mensajes "GO GO"
+const GO_GO_INTERVAL = 1000     // ms entre mensajes "GO GO"
+const STUN_DURATION = 3000      // 3 seconds stunned before death
+const REVIVE_RANGE = 48         // 1 cuerpo — ally/player must be this close to revive
+const REVIVE_TIME = 1000        // 1 second near stunned ally to revive
 
 /**
  * Ally — Base class for all ally types.
@@ -50,6 +53,10 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     this.isDead = false
     this._waiting = false
     this._goGoTimer = 0
+    this._stunned = false
+    this._stunTimer = 0
+    this._reviveTimer = 0
+    this._stunVisual = null
   }
 
   /**
@@ -61,6 +68,12 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
    */
   update (delta) {
     if (this.isDead || !this.active) return
+
+    // Stunned state — waiting for revive or death
+    if (this._stunned) {
+      this._updateStunned(delta)
+      return
+    }
 
     const player = this.scene?.player
     const distToPlayer = player ? Math.sqrt((this.x - player.x) ** 2 + (this.y - player.y) ** 2) : 0
@@ -397,7 +410,7 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
    * @param {number} amount
    */
   takeDamage (amount, fromX, fromY) {
-    if (this.isDead || amount <= 0) return
+    if (this.isDead || this._stunned || amount <= 0) return
 
     this.hp = Math.max(0, this.hp - amount)
     this._flashHit()
@@ -410,7 +423,7 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
     this._spawnHitEffect()
 
     if (this.hp <= 0) {
-      this.die()
+      this._enterStunned()
     }
   }
 
@@ -429,13 +442,149 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
+   * Enter stunned state — ally is down but can be revived.
+   */
+  _enterStunned () {
+    this._stunned = true
+    this._stunTimer = 0
+    this._reviveTimer = 0
+    this.setVelocity(0, 0)
+
+    // Visual: tint and show stars
+    if (this.setTint) this.setTint(0x888888)
+    this._showStunVisual()
+  }
+
+  /**
+   * Update stunned state: check for nearby rescuer or expire.
+   * @param {number} delta - ms
+   */
+  _updateStunned (delta) {
+    this._stunTimer += delta
+
+    // Check if player or another ally is nearby to revive
+    const rescuer = this._findRescuer()
+    if (rescuer) {
+      this._reviveTimer += delta
+      if (this._reviveTimer >= REVIVE_TIME) {
+        this._revive()
+        return
+      }
+    } else {
+      this._reviveTimer = 0
+    }
+
+    // Stun expired — actually die
+    if (this._stunTimer >= STUN_DURATION) {
+      this._cleanupStunVisual()
+      this.die()
+    }
+  }
+
+  /**
+   * Find a nearby player or ally that can revive this stunned ally.
+   * @returns {object|null}
+   */
+  _findRescuer () {
+    const player = this.scene?.player
+    if (player?.isAlive) {
+      const dx = player.x - this.x
+      const dy = player.y - this.y
+      if (dx * dx + dy * dy <= REVIVE_RANGE * REVIVE_RANGE) return player
+    }
+
+    if (this.scene?.allyGroup?.getChildren) {
+      for (const ally of this.scene.allyGroup.getChildren()) {
+        if (ally === this || !ally.active || ally.isDead || ally._stunned) continue
+        const dx = ally.x - this.x
+        const dy = ally.y - this.y
+        if (dx * dx + dy * dy <= REVIVE_RANGE * REVIVE_RANGE) return ally
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Revive from stunned state with 1 HP.
+   */
+  _revive () {
+    this._stunned = false
+    this._stunTimer = 0
+    this._reviveTimer = 0
+    this.hp = 1
+    if (this.clearTint) this.clearTint()
+    this._cleanupStunVisual()
+
+    // Flash green to show revival
+    if (this.setTint) {
+      this.setTint(0x66ff66)
+      if (this.scene?.time) {
+        this.scene.time.delayedCall(300, () => {
+          if (this.active && this.clearTint) this.clearTint()
+        })
+      }
+    }
+
+    // Show revival message
+    try {
+      if (this.scene?.add?.text) {
+        const msg = this.scene.add.text(this.x, this.y - 40, '¡Revivido!', {
+          fontFamily: 'monospace', fontSize: '14px', color: '#66ff66',
+          stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5).setDepth(10)
+        if (this.scene.tweens) {
+          this.scene.tweens.add({
+            targets: msg, y: this.y - 70, alpha: 0, duration: 1000,
+            onComplete: () => { if (msg?.destroy) msg.destroy() }
+          })
+        }
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Show rotating stars above the stunned ally.
+   */
+  _showStunVisual () {
+    if (!this.scene?.add?.text) return
+    try {
+      this._stunVisual = this.scene.add.text(this.x, this.y - 40, '⭐💫⭐', {
+        fontSize: '16px'
+      }).setOrigin(0.5).setDepth(10)
+
+      // Rotate the stars
+      if (this.scene.tweens) {
+        this.scene.tweens.add({
+          targets: this._stunVisual,
+          angle: 360,
+          duration: 1500,
+          repeat: -1
+        })
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Remove stun visual.
+   */
+  _cleanupStunVisual () {
+    if (this._stunVisual?.destroy) {
+      this._stunVisual.destroy()
+      this._stunVisual = null
+    }
+  }
+
+  /**
    * Emit ally:died and destroy.
    */
   die () {
     if (this.isDead) return
     this.isDead = true
+    this._stunned = false
 
     this.setVelocity(0, 0)
+    this._cleanupStunVisual()
     EventBus.emit('ally:died', { ally: this })
 
     if (this.scene && this.scene.tweens) {
@@ -516,17 +665,31 @@ export default class Ally extends Phaser.Physics.Arcade.Sprite {
    * @returns {object|null}
    */
   _findNearestEnemy (enemies) {
+    const player = this.scene?.player
     let nearest = null
     let minDist = Infinity
 
     for (const enemy of enemies) {
       const dx = enemy.x - this.x
       const dy = enemy.y - this.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
+      const distToSelf = Math.sqrt(dx * dx + dy * dy)
 
-      if (dist <= this.attackRange && dist < minDist) {
-        minDist = dist
+      // Direct threat: enemy within own attack range
+      if (distToSelf <= this.attackRange && distToSelf < minDist) {
+        minDist = distToSelf
         nearest = enemy
+        continue
+      }
+
+      // Defend player: enemy within 5 cuerpos of player
+      if (player?.isAlive) {
+        const pdx = enemy.x - player.x
+        const pdy = enemy.y - player.y
+        const distToPlayer = Math.sqrt(pdx * pdx + pdy * pdy)
+        if (distToPlayer <= 240 && distToSelf < minDist) {
+          minDist = distToSelf
+          nearest = enemy
+        }
       }
     }
 

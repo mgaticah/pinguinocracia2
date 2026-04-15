@@ -140,11 +140,34 @@ describe('Ally (base class)', () => {
       expect(ally.hp).toBe(0)
     })
 
-    it('should call die() when HP reaches 0', () => {
+    it('should enter stunned state when HP reaches 0', () => {
       const scene = createMockScene()
       const ally = new Ally(scene, 0, 0, 'test', { hp: 3 })
       ally.takeDamage(3)
+      expect(ally._stunned).toBe(true)
+      expect(ally.isDead).toBe(false)
+    })
+
+    it('should die after stun timer expires without rescue', () => {
+      const scene = createMockScene()
+      const ally = new Ally(scene, 0, 0, 'test', { hp: 3 })
+      ally.takeDamage(3)
+      // Simulate 3 seconds passing
+      ally.update(3100)
       expect(ally.isDead).toBe(true)
+    })
+
+    it('should revive with 1 HP when player is nearby during stun', () => {
+      const player = { x: 10, y: 0, isAlive: true }
+      const scene = createMockScene({ player })
+      const ally = new Ally(scene, 0, 0, 'test', { hp: 3 })
+      ally.takeDamage(3)
+      expect(ally._stunned).toBe(true)
+      // Simulate 1 second with player nearby
+      ally.update(1100)
+      expect(ally._stunned).toBe(false)
+      expect(ally.hp).toBe(1)
+      expect(ally.isDead).toBe(false)
     })
 
     it('should ignore 0 or negative damage', () => {

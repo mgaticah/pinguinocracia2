@@ -26,7 +26,8 @@ function createMock () {
     scene: {
       stop: vi.fn(),
       resume: vi.fn(),
-      get: vi.fn(() => ({ _proceedTransition: vi.fn() })),
+      launch: vi.fn(),
+      get: vi.fn(() => ({ _proceedTransition: vi.fn(), scoreSystem: { score: 0 } })),
       settings: { data: { levelName: 'Level 1', targetMap: 'map_level2' } }
     },
     tweens: { add: vi.fn() },
@@ -73,22 +74,21 @@ describe('LevelCompleteScene', () => {
     expect(mock.add.zone).toHaveBeenCalled()
   })
 
-  it('should stop scene and resume GameScene on button click', () => {
+  it('should stop scene and launch ShopScene on button click', () => {
     const pointerdownHandler = mock._handlers.pointerdown
     expect(pointerdownHandler).toBeDefined()
     pointerdownHandler()
     expect(mock.scene.stop).toHaveBeenCalledWith('LevelCompleteScene')
-    expect(mock.scene.resume).toHaveBeenCalledWith('GameScene')
+    expect(mock.scene.launch).toHaveBeenCalledWith('ShopScene', expect.objectContaining({ targetMap: 'map_level2' }))
   })
 
-  it('should call _proceedTransition on GameScene when clicking continue', () => {
-    const mockGameScene = { _proceedTransition: vi.fn() }
+  it('should pass credits from GameScene score to ShopScene', () => {
+    const mockGameScene = { scoreSystem: { score: 50 } }
     mock.scene.get = vi.fn(() => mockGameScene)
-    // Re-create to use updated mock
     scene.create()
     const pointerdownHandler = mock._handlers.pointerdown
     pointerdownHandler()
-    expect(mockGameScene._proceedTransition).toHaveBeenCalledWith('map_level2')
+    expect(mock.scene.launch).toHaveBeenCalledWith('ShopScene', expect.objectContaining({ credits: 50 }))
   })
 
   it('should add pulse tween to button text', () => {

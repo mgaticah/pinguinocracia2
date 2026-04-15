@@ -1,16 +1,16 @@
 import Enemy from './Enemy.js'
 
 const ATTACK_RANGE = 200
-const GAS_RADIUS = 80
+const BODY_SIZE = 48          // 1 cuerpo
 const GAS_DAMAGE_PER_SEC = 1
-const GAS_DURATION = 5000
-const GAS_COOLDOWN = 3000
+const GAS_DURATION = 3000     // 3 seconds area effect
+const GAS_COOLDOWN = 5000     // 5 seconds between shots
 const VISIBILITY_REDUCTION = 0.5
 
 /**
- * CamiónLanzaGas — Gas truck that creates ZonaDeGas areas.
- * 25 HP, slow speed, circular gas zones that deal gradual damage + reduce visibility.
- * Uses simplified steering instead of full A* pathfinding.
+ * MorsaLanzaGas — Walrus that launches gas clouds.
+ * 25 HP, slow speed. Gas is launched toward target, travels 1 cuerpo,
+ * then expands from 1×1 → 2×2 → 3×3 cuerpos over 3s, then fades.
  */
 export default class CamionLanzaGas extends Enemy {
   constructor (scene, x, y) {
@@ -22,22 +22,21 @@ export default class CamionLanzaGas extends Enemy {
       type: 'gas'
     })
 
-    // Vehicles use 96×96 frames — body covers center mass for projectile hits
+    // Vehicles: no extra scale (96×96 = 2 cuerpos)
+    if (this.setScale) this.setScale(1)
+
     if (this.body?.setSize) {
       this.body.setSize(48, 40)
       this.body.setOffset(24, 28)
     }
 
-    this._role = 'blocker'
     this._gasZones = []
     this._lastDirection = 'down'
   }
 
   update (delta) {
-    // Use simplified steering for vehicles
     if (this.isDead || !this.active) return
 
-    // Occlusion: hide visually only
     if (this._isOccluded()) {
       if (this.visible !== false && this.setVisible) this.setVisible(false)
     } else {
@@ -52,89 +51,103 @@ export default class CamionLanzaGas extends Enemy {
       return
     }
 
-    // Simple steering toward target
     const dx = this.target.x - this.x
     const dy = this.target.y - this.y
     const dist = Math.sqrt(dx * dx + dy * dy)
 
     if (dist > ATTACK_RANGE * 0.9) {
-      // Move toward target
       if (dist > 0) {
-        this.setVelocity(
-          (dx / dist) * this.speed,
-          (dy / dist) * this.speed
-        )
+        this.setVelocity((dx / dist) * this.speed, (dy / dist) * this.speed)
       }
     } else {
-      // In range — slow down
-      this.setVelocity(
-        (dx / dist) * this.speed * 0.2,
-        (dy / dist) * this.speed * 0.2
-      )
+      this.setVelocity((dx / dist) * this.speed * 0.2, (dy / dist) * this.speed * 0.2)
     }
 
-    // Direction-based animation for vehicle
+    // Animation
     const vx = this.body?.velocity?.x ?? 0
     const vy = this.body?.velocity?.y ?? 0
-    const textureKey = this.texture.key
-
     if (Math.abs(vx) > 1 || Math.abs(vy) > 1) {
-      if (Math.abs(vy) >= Math.abs(vx)) {
-        this._lastDirection = vy < 0 ? 'up' : 'down'
-      } else {
-        this._lastDirection = vx < 0 ? 'left' : 'right'
-      }
-      const moveKey = `${textureKey}_move_${this._lastDirection}`
-      if (this.scene?.anims?.exists(moveKey)) {
-        this.play(moveKey, true)
-      }
+      this._lastDirection = Math.abs(vy) >= Math.abs(vx)
+        ? (vy < 0 ? 'up' : 'down')
+        : (vx < 0 ? 'left' : 'right')
+      const moveKey = `${this.texture.key}_move_${this._lastDirection}`
+      if (this.scene?.anims?.exists(moveKey)) this.play(moveKey, true)
     }
 
-    // Apply separation from other enemies
     this._applySeparation()
 
-    // Fire gas cloud
     if (dist <= ATTACK_RANGE && this.canAttack()) {
       this._fireGas()
     }
 
-    // Update active gas zones
     this._updateGasZones(delta)
   }
 
   /**
-   * Create a ZonaDeGas at the target's position.
+   * Launch gas cloud: travels 1 cuerpo from morsa edge in facing direction,
+   * then becomes an expanding area effect.
    */
   _fireGas () {
-    if (!this.scene || !this.target) return
+    if (!this.scene) return
 
-    const gasX = this.target.x
-    const gasY = this.target.y
+    const dirVec = {
+      up: { x: 0, y: -1 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+      right: { x: 1, y: 0 }
+    }
+    const d = dirVec[this._lastDirection] || dirVec.down
+
+    // Launch point: morsa edge (48px) + 1 cuerpo travel (48px)
+    const launchX = this.x + d.x * BODY_SIZE
+    const landX = this.x + d.x * (BODY_SIZE * 2)
+    const launchY = this.y + d.y * BODY_SIZE
+    const landY = this.y + d.y * (BODY_SIZE * 2)
 
     const zone = {
-      x: gasX,
-      y: gasY,
-      radius: GAS_RADIUS,
-      remaining: GAS_DURATION,
+      x: landX,
+      y: landY,
+      phase: 'travel',    // travel → expand → fade
+      elapsed: 0,
+      damageTimer: 0,
+      radius: BODY_SIZE / 2,
       graphics: null,
-      damageTimer: 0
+      sprite: null
     }
 
-    // Visual effect
-    if (this.scene.add) {
+    // Visual: use efecGas sprite if available, else graphics
+    if (this.scene.add?.sprite && this.scene.anims?.exists('efecGas')) {
+      const spr = this.scene.add.sprite(launchX, launchY, 'efecGas')
+      spr.setDepth(4)
+      spr.setScale(0.5)
+      spr.play('efecGas')
+      zone.sprite = spr
+
+      // Animate travel: move from launch to land point
+      if (this.scene.tweens) {
+        this.scene.tweens.add({
+          targets: spr,
+          x: landX,
+          y: landY,
+          duration: 300,
+          onComplete: () => { zone.phase = 'expand' }
+        })
+      } else {
+        spr.setPosition(landX, landY)
+        zone.phase = 'expand'
+      }
+    } else if (this.scene.add?.graphics) {
       const g = this.scene.add.graphics()
-      g.fillStyle(0x88aa44, 0.3)
-      g.fillCircle(gasX, gasY, GAS_RADIUS)
       g.setDepth(4)
       zone.graphics = g
+      zone.phase = 'expand'
     }
 
     this._gasZones.push(zone)
   }
 
   /**
-   * Update all active gas zones — apply damage and reduce visibility.
-   * @param {number} delta
+   * Update gas zones: expand 1→2→3 cuerpos over duration, apply damage, then fade.
    */
   _updateGasZones (delta) {
     if (!this.scene) return
@@ -143,65 +156,69 @@ export default class CamionLanzaGas extends Enemy {
 
     for (let i = this._gasZones.length - 1; i >= 0; i--) {
       const zone = this._gasZones[i]
-      zone.remaining -= delta
+
+      if (zone.phase === 'travel') continue // still flying
+
+      zone.elapsed += delta
       zone.damageTimer += delta
 
-      if (zone.remaining <= 0) {
-        // Zone expired
-        if (zone.graphics) zone.graphics.destroy()
-        this._gasZones.splice(i, 1)
-        continue
+      // Expansion: 0→1s = 1 cuerpo, 1→2s = 2 cuerpos, 2→3s = 3 cuerpos
+      const progress = Math.min(1, zone.elapsed / GAS_DURATION)
+      const sizeMult = 1 + progress * 2 // 1→3
+      zone.radius = (BODY_SIZE / 2) * sizeMult
+
+      // Update visual
+      if (zone.sprite) {
+        zone.sprite.setScale(sizeMult * 0.5)
+        zone.sprite.setPosition(zone.x, zone.y)
+        // Fade in last 500ms
+        if (zone.elapsed > GAS_DURATION - 500) {
+          zone.sprite.setAlpha(Math.max(0, (GAS_DURATION - zone.elapsed) / 500))
+        }
+      } else if (zone.graphics) {
+        const alpha = zone.elapsed > GAS_DURATION - 500
+          ? Math.max(0.05, (GAS_DURATION - zone.elapsed) / 500) * 0.3
+          : 0.3
+        zone.graphics.clear()
+        zone.graphics.fillStyle(0x88aa44, alpha)
+        zone.graphics.fillCircle(zone.x, zone.y, zone.radius)
       }
 
-      // Apply damage every second to targets inside the zone
+      // Damage every second
       if (zone.damageTimer >= 1000) {
         zone.damageTimer = 0
-
         for (const t of allTargets) {
           if (!t.active) continue
-
           const dx = t.x - zone.x
           const dy = t.y - zone.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-
-          if (dist <= zone.radius) {
-            // Gradual damage
-            if (t.takeDamage) {
-              t.takeDamage(GAS_DAMAGE_PER_SEC)
-            }
-
-            // Reduce visibility (apply camera effect on player)
-            if (t === this.scene.player && this.scene.cameras) {
-              const cam = this.scene.cameras.main
-              if (cam && cam.setAlpha) {
-                cam.setAlpha(VISIBILITY_REDUCTION)
-                if (this.scene.time) {
-                  this.scene.time.delayedCall(1500, () => {
-                    if (cam.setAlpha) cam.setAlpha(1)
-                  })
-                }
+          if (dx * dx + dy * dy <= zone.radius * zone.radius) {
+            if (t.takeDamage) t.takeDamage(GAS_DAMAGE_PER_SEC)
+            // Reduce player visibility
+            if (t === this.scene.player && this.scene.cameras?.main?.setAlpha) {
+              this.scene.cameras.main.setAlpha(VISIBILITY_REDUCTION)
+              if (this.scene.time) {
+                this.scene.time.delayedCall(1500, () => {
+                  if (this.scene?.cameras?.main?.setAlpha) this.scene.cameras.main.setAlpha(1)
+                })
               }
             }
           }
         }
       }
 
-      // Fade out the gas zone visual as it expires
-      if (zone.graphics) {
-        const alpha = Math.max(0.1, zone.remaining / GAS_DURATION) * 0.3
-        zone.graphics.clear()
-        zone.graphics.fillStyle(0x88aa44, alpha)
-        zone.graphics.fillCircle(zone.x, zone.y, zone.radius)
+      // Expired
+      if (zone.elapsed >= GAS_DURATION) {
+        if (zone.sprite?.destroy) zone.sprite.destroy()
+        if (zone.graphics?.destroy) zone.graphics.destroy()
+        this._gasZones.splice(i, 1)
       }
     }
   }
 
-  /**
-   * Clean up gas zones when this enemy is destroyed.
-   */
   destroy () {
     for (const zone of this._gasZones) {
-      if (zone.graphics) zone.graphics.destroy()
+      if (zone.sprite?.destroy) zone.sprite.destroy()
+      if (zone.graphics?.destroy) zone.graphics.destroy()
     }
     this._gasZones = []
     super.destroy()

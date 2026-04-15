@@ -1,11 +1,11 @@
 import Enemy from './Enemy.js'
 
-const ATTACK_RANGE = 250
+const ATTACK_RANGE = 192 // 4 cuerpos (2 orca + 3 chorro - overlap)
 const CONE_HALF_ANGLE = Math.PI / 6 // 30 degree cone
 const PUSH_FORCE = 150
 const SLOW_MULTIPLIER = 0.5
 const SLOW_DURATION = 1500
-const CHORRO_COOLDOWN = 2000
+const CHORRO_COOLDOWN = 5000
 
 /**
  * CamiónLanzaAgua — Water cannon truck.
@@ -22,7 +22,10 @@ export default class CamionLanzaAgua extends Enemy {
       type: 'agua'
     })
 
-    // Vehicles use 96×96 frames — body covers center mass for projectile hits
+    // Vehicles use 96×96 frames — no extra scale (already 2 cuerpos)
+    if (this.setScale) this.setScale(1)
+
+    // Body covers center mass for projectile hits
     if (this.body?.setSize) {
       this.body.setSize(48, 40)
       this.body.setOffset(24, 28)
@@ -160,47 +163,67 @@ export default class CamionLanzaAgua extends Enemy {
   }
 
   /**
-   * Show a directional water jet sprite effect.
+   * Show a directional water jet that grows from 1→2→3 cuerpos then shrinks back.
+   * Total duration ~1.5s: grow 0.6s, hold 0.3s, shrink 0.6s.
    */
   _showChorroEffect () {
-    if (!this.scene || !this.scene.add) return
+    if (!this.scene?.add?.sprite) return
 
     const dir = this._lastDirection || 'right'
     const animKey = `efecChorro_${dir}`
+    const edgeOffset = 48 // orca edge from center
 
-    // Offset the effect in the facing direction
-    const offsets = {
-      up: { x: 0, y: -80 },
-      down: { x: 0, y: 80 },
-      left: { x: -80, y: 0 },
-      right: { x: 80, y: 0 }
+    // Direction unit vectors
+    const dirVec = {
+      up: { x: 0, y: -1 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+      right: { x: 1, y: 0 }
     }
-    const off = offsets[dir] || offsets.right
+    const d = dirVec[dir] || dirVec.right
 
-    const sprite = this.scene.add.sprite(this.x + off.x, this.y + off.y, 'efecChorro')
+    // Create sprite at orca edge, starting small
+    const startX = this.x + d.x * edgeOffset
+    const startY = this.y + d.y * edgeOffset
+    const sprite = this.scene.add.sprite(startX, startY, 'efecChorro')
     sprite.setDepth(5)
-    sprite.setScale(2)
+    sprite.setScale(0.5) // start small (≈1 cuerpo)
 
     try {
-      if (this.scene.anims?.exists(animKey)) {
-        sprite.play(animKey)
-      } else if (this.scene.anims?.exists('efecChorro')) {
-        sprite.play('efecChorro')
-      }
-    } catch (e) {
-      // Animation frames may not exist for placeholder textures
+      if (this.scene.anims?.exists(animKey)) sprite.play(animKey)
+      else if (this.scene.anims?.exists('efecChorro')) sprite.play('efecChorro')
+    } catch (_) {}
+
+    if (!this.scene.tweens) {
+      if (this.scene.time) this.scene.time.delayedCall(1500, () => { if (sprite?.destroy) sprite.destroy() })
+      return
     }
 
-    // Fade out and destroy
-    if (this.scene.tweens) {
-      this.scene.tweens.add({
-        targets: sprite,
-        alpha: 0,
-        duration: 500,
-        onComplete: () => sprite.destroy()
-      })
-    } else if (this.scene.time) {
-      this.scene.time.delayedCall(500, () => sprite.destroy())
-    }
+    // Phase 1: grow from 1 cuerpo to 3 cuerpos (0.6s)
+    this.scene.tweens.add({
+      targets: sprite,
+      scaleX: 2,
+      scaleY: 2,
+      x: this.x + d.x * (edgeOffset + 72),
+      y: this.y + d.y * (edgeOffset + 72),
+      duration: 600,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        // Phase 2: hold at max (0.3s), then shrink (0.6s)
+        if (!this.scene?.tweens) { if (sprite?.destroy) sprite.destroy(); return }
+        this.scene.tweens.add({
+          targets: sprite,
+          scaleX: 0.5,
+          scaleY: 0.5,
+          x: startX,
+          y: startY,
+          alpha: 0,
+          delay: 300,
+          duration: 600,
+          ease: 'Quad.easeIn',
+          onComplete: () => { if (sprite?.destroy) sprite.destroy() }
+        })
+      }
+    })
   }
 }

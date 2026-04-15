@@ -73,12 +73,10 @@ export default class LevelCompleteScene extends Phaser.Scene {
     hitZone.on('pointerout', () => btnText.setColor('#ffffff'))
     hitZone.on('pointerdown', () => {
       this.scene.stop('LevelCompleteScene')
-      this.scene.resume('GameScene')
-      // Tell GameScene to proceed with the transition
+      // Open shop before proceeding to next level
       const gameScene = this.scene.get('GameScene')
-      if (gameScene && gameScene._proceedTransition) {
-        gameScene._proceedTransition(targetMap)
-      }
+      const credits = gameScene?.scoreSystem?.score || 0
+      this.scene.launch('ShopScene', { targetMap: targetMap, credits })
     })
 
     // Pulse animation on button

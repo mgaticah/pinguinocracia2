@@ -20,19 +20,25 @@ const PADDING = 16
 const FONT_STYLE = {
   fontFamily: 'monospace',
   fontSize: '20px',
-  color: SKETCH_COLOR
+  color: '#ffffff',
+  stroke: '#000000',
+  strokeThickness: 3
 }
 
 const FONT_STYLE_LARGE = {
   fontFamily: 'monospace',
   fontSize: '32px',
-  color: SKETCH_COLOR
+  color: '#ffffff',
+  stroke: '#000000',
+  strokeThickness: 4
 }
 
 const FONT_STYLE_MAP = {
   fontFamily: 'monospace',
   fontSize: '40px',
-  color: SKETCH_COLOR
+  color: '#ffffff',
+  stroke: '#000000',
+  strokeThickness: 4
 }
 
 export default class HUDScene extends Phaser.Scene {
@@ -102,7 +108,7 @@ export default class HUDScene extends Phaser.Scene {
     this._positionFinalTimerText()
 
     // --- Zoom buttons (bottom-left) ---
-    const btnStyle = { fontFamily: 'monospace', fontSize: '28px', color: SKETCH_COLOR }
+    const btnStyle = { fontFamily: 'monospace', fontSize: '28px', color: '#ffffff', stroke: '#000000', strokeThickness: 3 }
     const bw = this.scale ? this.scale.width : 1920
     const bh = this.scale ? this.scale.height : 1080
 

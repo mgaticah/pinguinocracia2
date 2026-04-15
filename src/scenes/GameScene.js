@@ -191,7 +191,7 @@ export default class GameScene extends Phaser.Scene {
       this._controlsBg = this.add.graphics()
       this._controlsBg.setScrollFactor(0)
       this._controlsBg.setDepth(199)
-      this._controlsBg.fillStyle(0x111111, 0.9)
+      this._controlsBg.fillStyle(0x1a1a2e, 0.9)
       this._controlsBg.fillRect(0, viewH, this.scale.width, screenH - viewH)
     }
 
@@ -448,7 +448,7 @@ export default class GameScene extends Phaser.Scene {
       powerup.destroy()
     } else if (type === 'botellita') {
       if (this.globalCounter) {
-        this.globalCounter.molotovs += 1
+        this.globalCounter.molotovs += 3
         EventBus.emit('molotov:changed', { count: this.globalCounter.molotovs })
       }
       this._flashGreen(ally)
@@ -764,6 +764,12 @@ export default class GameScene extends Phaser.Scene {
 
       // --- Post-transition diagnostic log ---
       this._logLevelState('POST-TRANSITION')
+
+      // Sync HUD with current state after transition
+      EventBus.emit('player:healed', { amount: 0, hp: this.player?.hp || 10 })
+      EventBus.emit('score:changed', { score: this.scoreSystem?.score || 0, delta: 0 })
+      EventBus.emit('molotov:changed', { count: this.globalCounter?.molotovs || 0 })
+      EventBus.emit('weapon:changed', { weapon: this.player?.weapon || 'piedra' })
     })
   }
 

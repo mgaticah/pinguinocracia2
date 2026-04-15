@@ -7,6 +7,7 @@ import PauseScene from './scenes/PauseScene.js'
 import GameOverScene from './scenes/GameOverScene.js'
 import VictoryScene from './scenes/VictoryScene.js'
 import LevelCompleteScene from './scenes/LevelCompleteScene.js'
+import ShopScene from './scenes/ShopScene.js'
 
 const config = {
   type: Phaser.AUTO,
@@ -31,7 +32,8 @@ const config = {
     PauseScene,
     GameOverScene,
     VictoryScene,
-    LevelCompleteScene
+    LevelCompleteScene,
+    ShopScene
   ]
 }
 

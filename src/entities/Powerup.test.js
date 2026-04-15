@@ -198,18 +198,18 @@ describe('Powerup', () => {
   })
 
   describe('collect() — Botellita', () => {
-    it('should increment globalCounter.molotovs by 1', () => {
+    it('should increment globalCounter.molotovs by 3', () => {
       const p = new Powerup(mockScene, 100, 200, 'botellita')
       const collector = createMockCollector({ globalCounter: { molotovs: 3 } })
       p.collect(collector)
-      expect(collector.globalCounter.molotovs).toBe(4)
+      expect(collector.globalCounter.molotovs).toBe(6)
     })
 
     it('should emit molotov:changed', () => {
       const p = new Powerup(mockScene, 100, 200, 'botellita')
       const collector = createMockCollector({ globalCounter: { molotovs: 0 } })
       p.collect(collector)
-      expect(EventBus.emit).toHaveBeenCalledWith('molotov:changed', { count: 1 })
+      expect(EventBus.emit).toHaveBeenCalledWith('molotov:changed', { count: 3 })
     })
 
     it('should not crash if collector has no globalCounter', () => {

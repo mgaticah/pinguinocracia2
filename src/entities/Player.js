@@ -226,6 +226,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
       this.globalCounter.molotovs -= 1
       EventBus.emit('molotov:changed', { count: this.globalCounter.molotovs })
+
+      // Auto-switch back to piedra when out of molotovs
+      if (this.globalCounter.molotovs <= 0) {
+        this.weapon = 'piedra'
+        EventBus.emit('weapon:changed', { weapon: this.weapon })
+      }
     }
 
     // Play throw animation in the facing direction

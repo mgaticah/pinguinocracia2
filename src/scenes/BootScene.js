@@ -28,6 +28,9 @@ export default class BootScene extends Phaser.Scene {
     // Level complete celebration background
     this.load.image('celebracion', 'assets/celebracion.png')
 
+    // Shop between levels background
+    this.load.image('tiendanivel', 'assets/tiendanivel.png')
+
     // Splash screen / title background
     this.load.image('splashscreen', 'assets/splashscreen.png')
 
